@@ -6,10 +6,10 @@ Hyper-Claw 基于 [OpenClaw](https://github.com/openclaw/openclaw) fork，本文
 
 ## Remote 配置
 
-| Remote     | 地址                                          | 用途               |
-| ---------- | --------------------------------------------- | ------------------ |
-| **origin** | `https://github.com/ybwbqg9379/hyper-claw.git` | 你的 fork，推送代码 |
-| **upstream** | `https://github.com/openclaw/openclaw.git`  | 官方仓库，拉取更新 |
+| Remote       | 地址                                           | 用途                |
+| ------------ | ---------------------------------------------- | ------------------- |
+| **origin**   | `https://github.com/ybwbqg9379/hyper-claw.git` | 你的 fork，推送代码 |
+| **upstream** | `https://github.com/openclaw/openclaw.git`     | 官方仓库，拉取更新  |
 
 若 fork 地址不同，修改：`git remote set-url origin https://github.com/<用户名>/<仓库名>.git`
 
@@ -63,6 +63,50 @@ git checkout main && git merge feature/my-skill && git push origin main
 - `extensions/` — 扩展
 - `skills/` — 技能
 - `packages/` 下新建独立包
+
+## Commit Message 规范
+
+遵循 upstream OpenClaw 的约定，支持两种格式：
+
+### 格式 1：Conventional Commits（推荐）
+
+```
+type(scope): 描述
+```
+
+**允许的 type**：`feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`, `ci`, `build`, `security`, `style`, `revert`, `bug`
+
+**示例**：
+
+```
+feat(telegram): add per-topic agent routing
+fix(gateway): preserve route inheritance for session keys
+docs: update changelog
+chore(release): cut 2026.3.2
+test(discord): align bound-thread target kind
+```
+
+### 格式 2：Free-form 前缀（用于组件级变更）
+
+```
+Component: 描述
+```
+
+**示例**：
+
+```
+Extensions: migrate plugin-sdk imports
+Plugins/whatsapp: migrate to scoped imports
+Runtime: stabilize tool/run state transitions
+Compaction/Safeguard: preserve recent turns verbatim
+```
+
+### 规则
+
+- Subject ≤ 100 字符
+- 结尾不加句号
+- Merge / Revert / fixup! / squash! 自动跳过验证
+- 通过 `commit-msg` hook 自动检查（`pre-commit install --hook-type commit-msg`）
 
 ## 常用命令速查
 

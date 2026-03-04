@@ -34,6 +34,7 @@ cp .env.example .env
 
 # 7. 安装 pre-commit hooks（可选）
 pre-commit install
+pre-commit install --hook-type commit-msg
 ```
 
 ## 环境变量说明

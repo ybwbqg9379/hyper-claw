@@ -93,7 +93,8 @@ repos:
     rev: v1.22.0
     hooks:
       - id: zizmor
-        args: [--persona=regular, --min-severity=medium, --min-confidence=medium]
+        args:
+          [--persona=regular, --min-severity=medium, --min-confidence=medium]
         exclude: "^(vendor/|Swabble/)"
 
   # Python checks for skills scripts
@@ -155,3 +156,11 @@ repos:
         language: system
         pass_filenames: false
         types: [swift]
+
+      # Commit message format (matches upstream OpenClaw conventions)
+      - id: commit-msg-check
+        name: commit-msg-check
+        entry: git-hooks/commit-msg
+        language: script
+        stages: [commit-msg]
+        always_run: true

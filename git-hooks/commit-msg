@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+# commit-msg hook — validates commit message format
+# Matches upstream OpenClaw conventions:
+#   1. Conventional: type(scope): description   e.g. fix(telegram): resolve dups
+#   2. Free-form:    Component: description      e.g. Extensions: migrate imports
+#
+# Install: pre-commit install --hook-type commit-msg
+#   — or — cp git-hooks/commit-msg .git/hooks/commit-msg
+
+set -euo pipefail
+
+COMMIT_MSG_FILE="${1:?usage: commit-msg <message-file>}"
+
+# Read subject line (first non-comment, non-empty line).
+subject=""
+while IFS= read -r line; do
+  # Skip comments (lines starting with #).
+  [[ "$line" =~ ^# ]] && continue
+  # Skip empty lines before subject.
+  [[ -z "$line" ]] && continue
+  subject="$line"
+  break
+done < "$COMMIT_MSG_FILE"
+
+if [[ -z "$subject" ]]; then
+  echo "❌ commit-msg: empty commit message" >&2
+  exit 1
+fi
+
+# --- Pass-through patterns (no validation needed) ---
+
+# Merge commits
+if [[ "$subject" =~ ^Merge\ |^Revert\ \"  ]]; then
+  exit 0
+fi
+
+# Fixup / squash / amend
+if [[ "$subject" =~ ^(fixup|squash|amend)!\  ]]; then
+  exit 0
+fi
+
+# --- Length check ---
+
+if (( ${#subject} > 100 )); then
+  echo "❌ commit-msg: subject exceeds 100 characters (${#subject} chars)" >&2
+  echo "   $subject" >&2
+  exit 1
+fi
+
+# --- No trailing period ---
+
+if [[ "$subject" =~ [.]$ ]]; then
+  echo "❌ commit-msg: subject must not end with a period" >&2
+  echo "   $subject" >&2
+  exit 1
+fi
+
+# --- Format validation ---
+# Pattern 1: Conventional Commits — type(scope): description
+#   Allowed types (from upstream analysis):
+#   feat, fix, refactor, perf, test, docs, chore, ci, build, security, style, revert, bug
+CONV_TYPES="feat|fix|refactor|perf|test|docs|chore|ci|build|security|style|revert|bug"
+CONV_PATTERN="^($CONV_TYPES)(\([a-zA-Z0-9_./-]+\))?: .+"
+
+# Pattern 2: Free-form prefix — Component: description
+#   Uppercase or mixed-case word(s) or path segments, then colon, then space.
+#   Examples: Extensions:, Plugins/whatsapp:, Runtime:, iOS Security Stack 1/5:,
+#             Compaction/Safeguard:, Telegram/device-pair:
+FREEFORM_PATTERN="^[A-Z][a-zA-Z0-9 _/()-]*: .+"
+
+if [[ "$subject" =~ $CONV_PATTERN ]]; then
+  exit 0
+fi
+
+if [[ "$subject" =~ $FREEFORM_PATTERN ]]; then
+  exit 0
+fi
+
+# --- Failure ---
+
+echo "❌ commit-msg: subject does not match expected format" >&2
+echo "" >&2
+echo "   Got: $subject" >&2
+echo "" >&2
+echo "   Expected one of:" >&2
+echo "     type(scope): description   — e.g. fix(telegram): resolve dups" >&2
+echo "     type: description          — e.g. docs: update readme" >&2
+echo "     Component: description     — e.g. Extensions: migrate imports" >&2
+echo "" >&2
+echo "   Allowed types: feat, fix, refactor, perf, test, docs, chore, ci," >&2
+echo "                   build, security, style, revert, bug" >&2
+exit 1
