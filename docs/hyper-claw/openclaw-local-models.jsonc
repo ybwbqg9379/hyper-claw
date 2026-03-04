@@ -1,0 +1,59 @@
+# OpenClaw 本地模型配置
+# 将此内容合并到 ~/.openclaw/openclaw.json 中的顶层
+# 启动模型后，在 OpenClaw 中用 /model 命令切换到本地模型
+#
+# 使用方法：
+#   1. 启动模型：claw-qwen3-5-9B  (或其他 claw-* alias)
+#   2. 将下面的 "models" 块合并到 ~/.openclaw/openclaw.json
+#   3. 在 OpenClaw 对话中用 /model 切换到 local/qwen3.5-9b
+#
+{
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "local": {
+        "baseUrl": "http://127.0.0.1:1234/v1",
+        "apiKey": "local",
+        "api": "openai-responses",
+        "models": [
+          {
+            "id": "qwen3-8b",
+            "name": "Qwen3-8B Q6_K (Local)",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 8192,
+            "maxTokens": 4096
+          },
+          {
+            "id": "qwen3.5-4b",
+            "name": "Qwen3.5-4B Q4_K_M (Local)",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 8192,
+            "maxTokens": 4096
+          },
+          {
+            "id": "qwen3.5-9b",
+            "name": "Qwen3.5-9B Q4_K_M (Local)",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 8192,
+            "maxTokens": 4096
+          },
+          {
+            "id": "deepseek-r1-8b",
+            "name": "DeepSeek-R1-0528-Qwen3-8B Q8_0 (Local)",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 8192,
+            "maxTokens": 4096
+          }
+        ]
+      }
+    }
+  }
+}
