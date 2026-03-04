@@ -1,12 +1,12 @@
-# OpenClaw 本地模型配置
-# 将此内容合并到 ~/.openclaw/openclaw.json 中的顶层
-# 启动模型后，在 OpenClaw 中用 /model 命令切换到本地模型
-#
-# 使用方法：
-#   1. 启动模型：claw-qwen3-5-9B  (或其他 claw-* alias)
-#   2. 将下面的 "models" 块合并到 ~/.openclaw/openclaw.json
-#   3. 在 OpenClaw 对话中用 /model 切换到 local/qwen3.5-9b
-#
+// OpenClaw 本地模型配置
+// 将此内容合并到 ~/.openclaw/openclaw.json 中的顶层
+//
+// 使用方法：
+//   1. 启动模型：claw-qwen3-5-4B  (或其他 claw-* alias)
+//   2. 将下面的 "models" 块合并到 ~/.openclaw/openclaw.json
+//   3. 在 OpenClaw 对话中用 /model 切换，如 /model local/unsloth/Qwen3.5-4B-GGUF:Q4_K_M
+//
+// model id 必须与 llama-server 报告的 ID 一致（运行 curl http://127.0.0.1:1234/v1/models 可查看）
 {
   "models": {
     "mode": "merge",
@@ -17,39 +17,39 @@
         "api": "openai-responses",
         "models": [
           {
-            "id": "qwen3-8b",
+            "id": "Qwen/Qwen3-8B-GGUF:Q6_K",
             "name": "Qwen3-8B Q6_K (Local)",
             "reasoning": false,
             "input": ["text"],
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-            "contextWindow": 8192,
+            "contextWindow": 262144,
             "maxTokens": 4096
           },
           {
-            "id": "qwen3.5-4b",
+            "id": "unsloth/Qwen3.5-4B-GGUF:Q4_K_M",
             "name": "Qwen3.5-4B Q4_K_M (Local)",
             "reasoning": false,
             "input": ["text"],
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-            "contextWindow": 8192,
+            "contextWindow": 262144,
             "maxTokens": 4096
           },
           {
-            "id": "qwen3.5-9b",
+            "id": "unsloth/Qwen3.5-9B-GGUF:Q4_K_M",
             "name": "Qwen3.5-9B Q4_K_M (Local)",
             "reasoning": false,
             "input": ["text"],
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-            "contextWindow": 8192,
+            "contextWindow": 262144,
             "maxTokens": 4096
           },
           {
-            "id": "deepseek-r1-8b",
+            "id": "unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q8_0",
             "name": "DeepSeek-R1-0528-Qwen3-8B Q8_0 (Local)",
             "reasoning": true,
             "input": ["text"],
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-            "contextWindow": 8192,
+            "contextWindow": 262144,
             "maxTokens": 4096
           }
         ]

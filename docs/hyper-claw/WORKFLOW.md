@@ -115,3 +115,21 @@ git remote -v
 git fetch upstream && git merge upstream/main
 git log main..upstream/main --oneline
 ```
+
+## 本地开发速查
+
+```bash
+# 启动本地模型 + Gateway + TUI（三个终端）
+claw-qwen3-5-4B                           # 终端 1：本地模型
+pnpm start gateway install                 # 终端 2：Gateway（首次/重启时）
+pnpm tui                                   # 终端 3：TUI 交互
+
+# 飞书聊天：Gateway 启动后直接在飞书找机器人发消息
+# 切换模型
+/model local/unsloth/Qwen3.5-4B-GGUF:Q4_K_M
+
+# 清除 session
+/reset
+```
+
+详见 [SETUP.md](./SETUP.md#本地-llm-模型llamacpp)。
