@@ -32,9 +32,10 @@ pnpm build
 cp .env.example .env
 # 编辑 .env，填入你的 API keys（至少设置一个 Model Provider）
 
-# 7. 安装 pre-commit hooks（可选）
-pre-commit install
-pre-commit install --hook-type commit-msg
+# 7. Git hooks 已自动生效
+# 项目配置了 core.hooksPath=git-hooks，commit-msg 验证无需额外安装
+# 可选：安装 pre-commit 获得更多检查（lint、format 等）
+# brew install pre-commit && pre-commit install
 ```
 
 ## 环境变量说明
