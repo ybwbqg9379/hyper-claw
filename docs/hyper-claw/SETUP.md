@@ -336,6 +336,7 @@ pnpm start plugins install ./extensions/feishu
       "im:message.p2p_msg:readonly",
       "im:message.group_at_msg:readonly",
       "im:resource",
+      "contact:contact.base:readonly",
       "im:chat.access_event.bot_p2p_chat:read",
       "im:chat.members:bot_access",
       "docx:document",
