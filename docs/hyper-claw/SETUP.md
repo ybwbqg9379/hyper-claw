@@ -136,12 +136,12 @@ cp ~/.openclaw/workspace/{USER,AGENTS,TOOLS,HEARTBEAT}.md ~/.openclaw/workspace-
 
 项目使用 **三个飞书 Bot + 策略师** 架构，每个 Bot 对应独立的 agent 和 workspace，记忆完全隔离：
 
-| Agent               | ID                       | Workspace                            | 飞书 Bot              | 职责                  |
-| ------------------- | ------------------------ | ------------------------------------ | --------------------- | --------------------- |
-| **Personal 🦞**     | `personal`               | `~/.openclaw/workspace-personal`     | hyper-claw            | 个人助手              |
-| **HyperCreator 🏢** | `hypercreator` (default) | `~/.openclaw/workspace-hypercreator` | hyper-claw-enterprise | HyperCreator 企业助手 |
-| **RaxonWood 🌲**    | `raxonwood`              | `~/.openclaw/workspace-raxonwood`    | raxon-claw            | RaxonWood 企业助手    |
-| **Strategist 🧠**   | `strategist`             | `~/.openclaw/workspace-strategist`   | —                     | 深度分析、研究报告    |
+| Agent               | ID                   | Workspace                            | 飞书 Bot              | 职责                  |
+| ------------------- | -------------------- | ------------------------------------ | --------------------- | --------------------- |
+| **Personal 🦞**     | `personal` (default) | `~/.openclaw/workspace-personal`     | hyper-claw            | 个人助手              |
+| **HyperCreator 🏢** | `hypercreator`       | `~/.openclaw/workspace-hypercreator` | hyper-claw-enterprise | HyperCreator 企业助手 |
+| **RaxonWood 🌲**    | `raxonwood`          | `~/.openclaw/workspace-raxonwood`    | raxon-claw            | RaxonWood 企业助手    |
+| **Strategist 🧠**   | `strategist`         | `~/.openclaw/workspace-strategist`   | —                     | 深度分析、研究报告    |
 
 > [!IMPORTANT]
 > 每个 Bot 的记忆文件（`memory/*.md`）存储在各自的 workspace 目录下，**绝对不能交叉**。
@@ -167,10 +167,13 @@ cp ~/.openclaw/workspace/{USER,AGENTS,TOOLS,HEARTBEAT}.md ~/.openclaw/workspace-
       }
     },
     "list": [
-      { "id": "personal", "workspace": "~/.openclaw/workspace-personal" },
+      {
+        "id": "personal",
+        "default": true,
+        "workspace": "~/.openclaw/workspace-personal"
+      },
       {
         "id": "hypercreator",
-        "default": true,
         "workspace": "~/.openclaw/workspace-hypercreator"
       },
       { "id": "raxonwood", "workspace": "~/.openclaw/workspace-raxonwood" },
@@ -338,6 +341,21 @@ pnpm tui
 ```bash
 pnpm start plugins install ./extensions/feishu
 ```
+
+> [!WARNING]
+> 安装本地飞书插件后，必须从 `openclaw.json` 中移除内置 feishu 插件的声明，否则会出现 `duplicate plugin id detected` 警告：
+>
+> ```jsonc
+> // openclaw.json — 删除这一项
+> "plugins": {
+>   "entries": {
+>     "feishu": { "enabled": true }  // ← 删除整个 feishu key
+>   }
+> }
+> ```
+>
+> 本地扩展（`~/.openclaw/extensions/feishu/`）已通过 `openclaw.plugin.json` 注册 `id: "feishu"`，
+> 不需要在 `plugins.entries` 中重复声明。
 
 ### 2. 创建飞书应用
 
@@ -632,7 +650,7 @@ pnpm start gateway stop && pnpm start gateway install
           "appSecret": "RaxonWoodAppSecret"
         }
       },
-      "defaultAccount": "hypercreator"
+      "defaultAccount": "personal"
     }
   },
   "bindings": [
@@ -906,7 +924,7 @@ pnpm start cron add \
 {
   "channels": {
     "feishu": {
-      "defaultAccount": "hypercreator"
+      "defaultAccount": "personal"
     }
   }
 }
