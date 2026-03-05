@@ -172,6 +172,31 @@ cp ~/.openclaw/workspace/{USER,AGENTS,TOOLS,HEARTBEAT}.md ~/.openclaw/workspace-
 - `heartbeat.every: 30m`：每 30 分钟执行 `HEARTBEAT.md` 清单
 - `agents.defaults.model`：所有 agent 默认使用本地模型
 
+### 门下省 · Strategist 输出自检
+
+Strategist agent 内嵌强制质量关卡（灵感来源：[Edict 三省六部制](https://github.com/cft0808/edict)）：
+
+| 自检关   | 检查内容               |
+| -------- | ---------------------- |
+| 事实关   | 数据可溯源，无编造     |
+| 逻辑关   | 论证链完整，无跳跃     |
+| 反面关   | 至少一个反对意见       |
+| 可执行关 | 有具体下一步和时间节点 |
+| 简洁关   | 无废话重复             |
+
+不通过不发出，封驳重做。详见 `workspace-strategist/SOUL.md`。
+
+### 任务看板（飞书多维表格）
+
+通过飞书 bitable 实现轻量级任务追踪：
+
+- 在飞书对话中说 **"创建任务看板"** → AI 自动创建多维表格
+- 字段：任务名称、状态、优先级、负责人、截止日期、来源、备注
+- 支持自然语言操作："加个任务 XXX"、"看看任务"、"XXX 完成了"
+- Heartbeat 自动检查逾期和阻塞任务
+
+详见 `workspace/TOOLS.md`。
+
 ---
 
 ## 本地 LLM 模型（llama.cpp）

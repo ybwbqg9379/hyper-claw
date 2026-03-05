@@ -56,7 +56,45 @@ git fetch upstream && git merge upstream/main
 
 ## 已安装 Skills
 
-_（暂无自定义 skill，后续安装后在此记录）_
+| Skill          | 说明                                    | CLI 依赖         |
+| -------------- | --------------------------------------- | ---------------- |
+| `gog`          | Google Workspace (Calendar/Gmail/Drive) | `gog` CLI        |
+| `github`       | GitHub Issues/PR/CI                     | `gh` CLI         |
+| `summarize`    | 文档/网页摘要                           | `summarize` CLI  |
+| `healthcheck`  | 系统安全审计                            | 内置             |
+| `feishu-doc`   | 飞书文档读写/创建/润色                  | 内置（飞书插件） |
+| `feishu-drive` | 飞书云盘管理                            | 内置（飞书插件） |
+| `feishu-wiki`  | 飞书知识库                              | 内置（飞书插件） |
+| `feishu-perm`  | 飞书权限管理（默认关闭）                | 内置（飞书插件） |
+
+## 任务看板（飞书多维表格）
+
+使用飞书 bitable 作为轻量级任务追踪看板。
+
+### 首次初始化
+
+用户说"创建任务看板"时，用 `feishu_bitable` 工具创建多维表格。
+
+**推荐字段结构：**
+
+| 字段     | 类型         | 说明                                        |
+| -------- | ------------ | ------------------------------------------- |
+| 任务名称 | Text         | 任务标题                                    |
+| 状态     | SingleSelect | 待办 / 进行中 / 已完成 / 阻塞               |
+| 优先级   | SingleSelect | P0-紧急 / P1-高 / P2-中 / P3-低             |
+| 负责人   | Text         | 执行者                                      |
+| 截止日期 | DateTime     | deadline                                    |
+| 来源     | SingleSelect | 用户指派 / Strategist 建议 / Heartbeat 发现 |
+| 备注     | Text         | 补充说明                                    |
+
+### 日常操作
+
+- **添加任务**：用户说"记一下 XXX"或"加个任务 XXX" -> 写入 bitable
+- **查看看板**：用户说"看看任务" -> 列出待办和进行中的任务
+- **更新状态**：用户说"XXX 完成了" -> 更新状态字段
+- **每日汇报**：Heartbeat 自动检查逾期和阻塞任务
+
+> 创建后将 bitable URL 记录到 MEMORY.md，确保跨 session 可定位。
 
 ## 权限边界
 
