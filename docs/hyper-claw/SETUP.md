@@ -147,6 +147,13 @@ cp ~/.openclaw/workspace/{USER,AGENTS,TOOLS,HEARTBEAT}.md ~/.openclaw/workspace-
 > 每个 Bot 的记忆文件（`memory/*.md`）存储在各自的 workspace 目录下，**绝对不能交叉**。
 > 这通过 `bindings` 配置实现——每个飞书账号绑定到对应的 agent，agent 决定 workspace 路径。
 
+> [!TIP]
+> 每个 Bot 的 `SOUL.md` 应定制独立身份，而不是共用通用模板：
+>
+> - **personal**：个人全能助手（不绑定特定项目）
+> - **hypercreator**：HyperCreator 企业助手（AIGC 平台 + 商务运营）
+> - **raxonwood**：RaxonWood 量化交易助手（QuantTrading 专属）
+
 在 TUI 中用 `/agent strategist` 切换到策略师模式。
 
 ### Session 隔离与 Heartbeat
@@ -638,16 +645,19 @@ pnpm start gateway stop && pnpm start gateway install
         "personal": {
           "appId": "cli_个人AppID",
           "appSecret": "个人AppSecret",
-          "botName": "Hyper Claw AI"
+          "botName": "Hyper Claw AI",
+          "groupPolicy": "open"
         },
         "hypercreator": {
           "appId": "cli_HyperCreatorAppID",
           "appSecret": "HyperCreatorAppSecret",
-          "botName": "Hyper Claw AI"
+          "botName": "Hyper Claw AI",
+          "groupPolicy": "open"
         },
         "raxonwood": {
           "appId": "cli_RaxonWoodAppID",
-          "appSecret": "RaxonWoodAppSecret"
+          "appSecret": "RaxonWoodAppSecret",
+          "groupPolicy": "open"
         }
       },
       "defaultAccount": "personal"
@@ -855,17 +865,11 @@ Bot 不会自动看到所有知识库空间，需要手动授权：
         ]
       }
     }
-  },
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "local/你的本地模型ID",
-        "fallbacks": ["deepseek/deepseek-chat"]
-      }
-    }
   }
 }
 ```
+
+配置后即可在飞书对话中通过 `/model` 命令手动切换（见下方命令）。
 
 > ⚠️ **api 必须是 `openai-completions`**，不是 `openai-responses`。DeepSeek 使用 OpenAI 兼容的 chat completions 接口。
 
