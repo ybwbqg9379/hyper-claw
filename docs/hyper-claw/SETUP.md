@@ -9,6 +9,7 @@
 - **pnpm** ≥ 10.x（`npm install -g pnpm`）
 - **llama.cpp**（可选，本地模型推理。`brew install llama.cpp`）
 - **pre-commit**（可选，`pip install pre-commit` 或 `brew install pre-commit`）
+- **Homebrew**（macOS/Linux，安装 Skills 所需的 CLI 工具）
 
 ## 快速开始
 
@@ -108,6 +109,12 @@ OpenClaw 的 workspace 是 agent 的"大脑"——人格、行为规则、记忆
 ```bash
 # 首次配置（如果 workspace 文件需要重置或新机器初始化）
 cp -r docs/hyper-claw/workspace-templates/* ~/.openclaw/workspace/
+
+# Strategist（第二 agent）workspace
+mkdir -p ~/.openclaw/workspace-strategist/memory
+cp -r docs/hyper-claw/workspace-templates-strategist/* ~/.openclaw/workspace-strategist/
+# 共享文件从主 workspace 复制
+cp ~/.openclaw/workspace/{USER,AGENTS,TOOLS,HEARTBEAT}.md ~/.openclaw/workspace-strategist/
 ```
 
 ### 文件说明
@@ -124,6 +131,46 @@ cp -r docs/hyper-claw/workspace-templates/* ~/.openclaw/workspace/
 | `memory/*.md`  | 知识层 | 原始每日日志（仅加载今天+昨天）     |
 
 > 💡 这些文件不在 git 仓库内，不会影响 upstream 合并。模板副本保存在 `docs/hyper-claw/workspace-templates/`。
+
+### 双 Agent 架构
+
+项目使用 **执行者 + 策略师** 双 Agent 模式，共享一个飞书 Bot：
+
+| Agent             | ID               | Workspace                          | 职责                           |
+| ----------------- | ---------------- | ---------------------------------- | ------------------------------ |
+| **Claw 🦞**       | `claw` (default) | `~/.openclaw/workspace`            | 日常操作、日历、TODO、文件管理 |
+| **Strategist 🧠** | `strategist`     | `~/.openclaw/workspace-strategist` | 深度分析、研究报告、方案设计   |
+
+在 TUI 中用 `/agent strategist` 切换到策略师模式。
+
+### Session 隔离与 Heartbeat
+
+在 `openclaw.json` 中配置：
+
+```json
+{
+  "session": {
+    "dmScope": "per-account-channel-peer"
+  },
+  "agents": {
+    "defaults": {
+      "model": "local/unsloth/Qwen3.5-4B-GGUF:Q4_K_M",
+      "heartbeat": {
+        "every": "30m",
+        "target": "last"
+      }
+    },
+    "list": [
+      { "id": "claw", "default": true, "workspace": "~/.openclaw/workspace" },
+      { "id": "strategist", "workspace": "~/.openclaw/workspace-strategist" }
+    ]
+  }
+}
+```
+
+- `dmScope: per-account-channel-peer`：私聊按账号+渠道+对端三维隔离
+- `heartbeat.every: 30m`：每 30 分钟执行 `HEARTBEAT.md` 清单
+- `agents.defaults.model`：所有 agent 默认使用本地模型
 
 ---
 
@@ -150,8 +197,8 @@ cp -r docs/hyper-claw/workspace-templates/* ~/.openclaw/workspace/
 # Qwen3-8B (Q6_K, ~6GB)
 alias claw-qwen3='llama-server -hf Qwen/Qwen3-8B-GGUF:Q6_K -ngl 99 --port 1234 --host 127.0.0.1 -c 32768 --reasoning-format none --reasoning-budget 0 -np 2 --log-prefix --log-timestamps'
 
-# Qwen3.5-4B (Q4_K_M, ~2.5GB) — 推荐日常使用，256K 上下文
-alias claw-qwen3-5-4B='llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 262144 --reasoning-format none --reasoning-budget 0 -np 2 --no-mmproj --log-prefix --log-timestamps'
+# Qwen3.5-4B (Q4_K_M, ~2.5GB) — 推荐日常使用，256K 上下文，多模态视觉
+alias claw-qwen3-5-4B='llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 262144 --reasoning-format none --reasoning-budget 0 -np 2 --log-prefix --log-timestamps'
 
 # Qwen3.5-9B (Q4_K_M, ~5GB)
 alias claw-qwen3-5-9B='llama-server -hf unsloth/Qwen3.5-9B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 32768 --reasoning-format none --reasoning-budget 0 -np 2 --no-mmproj --log-prefix --log-timestamps'
@@ -164,14 +211,16 @@ alias claw-deepseek='llama-server -hf unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q8_
 <summary>Windows PowerShell 等效命令（添加到 $PROFILE）</summary>
 
 ```powershell
-function claw-qwen3-5-4B { llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 262144 --reasoning-format none --reasoning-budget 0 -np 2 --no-mmproj --log-prefix --log-timestamps }
-function claw-qwen3-5-9B { llama-server -hf unsloth/Qwen3.5-9B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 32768 --reasoning-format none --reasoning-budget 0 -np 2 --no-mmproj --log-prefix --log-timestamps }
+function claw-qwen3-5-4B { llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 262144 --reasoning-format none --reasoning-budget 0 -np 2 --log-prefix --log-timestamps }
+function claw-qwen3-5-9B { llama-server -hf unsloth/Qwen3.5-9B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 32768 --reasoning-format none --reasoning-budget 0 -np 2 --log-prefix --log-timestamps }
 function claw-deepseek { llama-server -hf unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q8_0 -ngl 99 --port 1234 --host 127.0.0.1 -c 32768 --reasoning-format deepseek --reasoning-budget -1 -np 2 --log-prefix --log-timestamps }
 ```
 
 </details>
 
 > **参数说明**: `-ngl 99` 全部 offload 到 GPU；`-c` 上下文长度；`-np 2` 并发 slot 数；`--reasoning-format none --reasoning-budget 0` 关闭 thinking。
+>
+> **多模态视觉**: Qwen3.5 系列原生支持图像理解（early-fusion 训练）。不加 `--no-mmproj` 时 llama-server 会自动下载视觉投影层（额外 ~0.5-1GB 显存）。模型配置中需声明 `"input": ["text", "image"]`。
 >
 > **NVIDIA GPU 用户**: `-ngl 99` 同样适用。确保 llama.cpp 编译时启用 CUDA（`cmake -DGGML_CUDA=ON`）。
 
@@ -293,6 +342,86 @@ pnpm start pairing approve feishu <CODE>
 | `/status` | 查看机器人状态   |
 
 详细配置参见 [docs/channels/feishu.md](../channels/feishu.md)。
+
+---
+
+## Skills 安装
+
+Skills 扩展 agent 的能力。以下是推荐安装的跨平台 skills：
+
+### 内置 Skills（bundled，无需安装）
+
+| Skill           | 说明               | 依赖   |
+| --------------- | ------------------ | ------ |
+| `session-logs`  | 搜索和分析历史会话 | `jq`   |
+| `skill-creator` | 创建/更新 skills   | 无     |
+| `tmux`          | 远程控制 tmux      | `tmux` |
+| `weather`       | 天气查询           | 无     |
+| `healthcheck`   | 系统安全审计       | 无     |
+
+### 推荐安装
+
+```bash
+# CLI 工具
+brew install steipete/tap/gogcli      # Google Workspace (Calendar/Gmail/Drive)
+brew install steipete/tap/summarize   # 文档/网页摘要
+# gh 通常已装：brew install gh
+
+# MCP 工具管理器（联网搜索需要）
+npm install -g mcporter
+```
+
+安装后 skills 自动就绪（`pnpm start skills list` 可查看状态）。
+
+### Google Workspace 首次授权（gog）
+
+```bash
+# 1. 从 Google Cloud Console 下载 OAuth client_secret.json
+# 2. 导入凭证
+gog auth credentials /path/to/client_secret.json
+
+# 3. 添加 Google 账号
+gog auth add you@gmail.com --services gmail,calendar,drive,contacts,docs,sheets
+
+# 4. 确认
+gog auth list
+```
+
+---
+
+## 联网搜索（web_search）
+
+OpenClaw 内置 `web_fetch`（抓取 URL，无需配置）和 `web_search`（主动搜索，需后端）。
+
+### 方案：web-search-free（免费、无 API Key）
+
+通过 Exa MCP 服务实现免费联网搜索。
+
+```bash
+# 1. 安装 skill
+npx clawhub install web-search-free
+
+# 2. 安装 mcporter（如果还没装）
+npm install -g mcporter
+
+# 3. 配置 Exa MCP server
+mcporter config add exa "https://mcp.exa.ai/mcp?tools=web_search_exa,web_search_advanced_exa,get_code_context_exa,crawling_exa,company_research_exa,people_search_exa,deep_researcher_start,deep_researcher_check"
+
+# 4. 验证
+mcporter list exa
+```
+
+搜索工具：
+
+| 工具                      | 用途                              |
+| ------------------------- | --------------------------------- |
+| `web_search_exa`          | 通用网页搜索                      |
+| `web_search_advanced_exa` | 带日期/域名/分类过滤的高级搜索    |
+| `get_code_context_exa`    | 代码搜索（GitHub/Stack Overflow） |
+| `company_research_exa`    | 企业调研                          |
+| `deep_researcher_start`   | AI 深度研究报告（15s-3min）       |
+
+> 💡 `web_fetch` 无需任何配置，给 AI 发链接它就能读取内容。`web-search-free` skill 提供主动搜索能力。
 
 ---
 
