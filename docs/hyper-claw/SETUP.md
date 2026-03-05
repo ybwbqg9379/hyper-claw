@@ -580,6 +580,40 @@ pnpm start gateway stop && pnpm start gateway install
 
 > ⚠️ 公司飞书应用发布可能需要管理员审批。
 
+### 多账号工具路由（重要）
+
+飞书工具（`feishu_wiki`、`feishu_drive`、`feishu_doc` 等）在多账号环境下的 credentials 选择由 `tool-account.ts` 中的 `resolveFeishuToolAccount` 控制，优先级如下：
+
+```
+1. params.executeParams.accountId   →  用户在工具参数中显式指定的账号
+2. ctx.agentAccountId               →  当前会话绑定的账号（由 Bot 所属租户决定）
+3. channels.feishu.defaultAccount   →  openclaw.json 中配置的全局默认账号
+```
+
+**每个 Bot 会话天然知道自己属于哪个账号**（`agentAccountId`），各场景的行为：
+
+| 场景                  | `agentAccountId` | 工具使用的账号          |
+| --------------------- | ---------------- | ----------------------- |
+| raxon-claw 单聊/群聊  | `"raxon"`        | raxon                   |
+| company bot 单聊/群聊 | `"company"`      | company                 |
+| Cron Job → company 群 | `"company"`      | company                 |
+| Cron Job → raxon 群   | `"raxon"`        | raxon                   |
+| `agentAccountId` 为空 | `undefined`      | → 兜底 `defaultAccount` |
+
+> [!CAUTION]
+> **踩坑经验（2026.03）**：原始代码中 `defaultAccount`（全局配置）的优先级高于 `agentAccountId`（会话上下文），
+> 导致**所有飞书工具调用都使用 company 账号**，无论消息来自哪个 Bot。
+> 表现为：raxon-claw 调 `feishu_wiki` 返回 company 的知识库，或返回空（因为 company 没有 raxon 的知识库权限）。
+> **修复**：交换 `tool-account.ts` 中两行的优先级顺序（`agentAccountId` 优先于 `defaultAccount`）。
+
+### 多账号权限独立
+
+每个飞书账号（main / company / raxon）对应**独立的 App**，权限完全隔离：
+
+- **App 权限**（scope）需要在每个 App 的飞书开放平台单独配置
+- **文档/知识库/多维表格权限**需要分别添加对应 Bot 为成员
+- 一个 App 有权限不代表另一个 App 也有
+
 ---
 
 ## 安全加固（个人机器部署必读）
@@ -672,6 +706,18 @@ Bot 需要文档权限才能读写：
 1. 打开文档/多维表格 → **分享** → 搜索 Bot 应用名 → 添加
 2. 或创建共享文件夹，把文档放入后共享给 Bot
 3. 多维表格需额外权限：`bitable:app` + `bitable:app:readonly`
+
+### 飞书知识库（Wiki）共享给 Bot
+
+Bot 不会自动看到所有知识库空间，需要手动授权：
+
+1. **App 权限**：确保 Bot 应用已开通 `wiki:wiki` + `wiki:wiki:readonly`（见上方权限配置）
+2. **知识库成员**：打开知识库空间 → **设置** → **成员设置** → **知识库成员** → 添加 Bot
+3. **多账号注意**：每个飞书账号（main / company / raxon）是**独立的 App**，需要分别添加到对应知识库
+
+> ⚠️ **账号路由**：`feishu_wiki` 工具使用 agent 绑定的账号（`agentAccountId`），而非全局 `defaultAccount`。
+> 如果 Bot 返回空结果或错误的知识库列表，检查所用账号是否已被添加为知识库成员。
+> 可通过 Gateway 日志 `[wiki-account] resolved accountId=xxx` 确认实际使用的账号。
 
 ---
 
@@ -823,16 +869,17 @@ pnpm start cron remove <jobId>         # 删除
 
 ### 踩坑记录
 
-| 问题                                      | 解决                                       |
-| ----------------------------------------- | ------------------------------------------ |
-| `Feishu account "default" not configured` | 设置 `channels.feishu.defaultAccount`      |
-| Bot 用 web_fetch 代替 feishu skill        | prompt 显式指定 skill 名和 token/table_id  |
-| 知识库文档读不了                          | 用 bitable skill + 精确 app_token/table_id |
-| `--to` 格式                               | 直接用 `oc_` 开头的群聊 ID                 |
-| 4B 不遵循"不超过 5 项"                    | 改用 DeepSeek                              |
-| DeepSeek 输出 Python 代码                 | prompt 加"不要展示分析过程、代码"          |
-| 报告缺少段落间距                          | prompt 加"每个大段落标题前后各空一行"      |
-| @mention 不生效                           | 用 `<at user_id="xxx">姓名</at>` 格式      |
+| 问题                                      | 解决                                              |
+| ----------------------------------------- | ------------------------------------------------- |
+| `Feishu account "default" not configured` | 设置 `channels.feishu.defaultAccount`             |
+| Bot 用 web_fetch 代替 feishu skill        | prompt 显式指定 skill 名和 token/table_id         |
+| 知识库文档读不了                          | 用 bitable skill + 精确 app_token/table_id        |
+| `feishu_wiki` 返回空 / 错误账号知识库     | 确认 Bot 已加为知识库成员 + 检查 agent 绑定的账号 |
+| `--to` 格式                               | 直接用 `oc_` 开头的群聊 ID                        |
+| 4B 不遵循"不超过 5 项"                    | 改用 DeepSeek                                     |
+| DeepSeek 输出 Python 代码                 | prompt 加"不要展示分析过程、代码"                 |
+| 报告缺少段落间距                          | prompt 加"每个大段落标题前后各空一行"             |
+| @mention 不生效                           | 用 `<at user_id="xxx">姓名</at>` 格式             |
 
 > 💡 定时任务需要 Mac 保持开机且 Gateway 运行。任务会持久化在 `~/.openclaw/cron/jobs.json`，重启不丢失。
 
