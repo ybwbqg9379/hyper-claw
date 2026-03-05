@@ -350,8 +350,6 @@ pnpm start plugins install ./extensions/feishu
       "drive:drive:readonly",
       "drive:drive.search:readonly",
       "drive:drive.metadata:readonly",
-      "drive:drive.version",
-      "drive:drive.version:readonly",
       "drive:file",
       "drive:file:readonly",
       "drive:file:upload",
