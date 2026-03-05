@@ -292,12 +292,68 @@ pnpm start plugins install ./extensions/feishu
 
 1. 打开 [飞书开放平台](https://open.feishu.cn/app)，创建企业自建应用
 2. 复制 **App ID**（`cli_xxx`）和 **App Secret**
-3. **权限** → 批量导入必要权限（`im:message`, `im:message:send_as_bot` 等）
-4. **应用能力** → 启用 **机器人**
-5. **事件订阅** → 选择 **长连接**，添加 `im.message.receive_v1`
+3. **应用能力** → 启用 **机器人**
+4. **事件订阅** → 选择 **长连接**，添加 `im.message.receive_v1`
+5. **权限管理** → 批量导入权限（见下方 JSON）
 6. **版本管理** → 创建版本并发布
 
-> ⚠️ 事件订阅保存前需确保 Gateway 已运行，否则长连接无法建立。
+### 2.1 权限配置（批量导入）
+
+在**权限管理**页面，点击右上角 **批量导入/导出** → **Import**，粘贴以下 JSON：
+
+```json
+{
+  "scopes": {
+    "tenant": [
+      "im:message",
+      "im:message:send_as_bot",
+      "im:message:readonly",
+      "im:message.p2p_msg:readonly",
+      "im:message.group_at_msg:readonly",
+      "im:resource",
+      "im:chat.access_event.bot_p2p_chat:read",
+      "im:chat.members:bot_access",
+      "docx:document",
+      "docx:document:readonly",
+      "docx:document:create",
+      "docx:document:write_only",
+      "docx:document.block:convert",
+      "drive:drive",
+      "drive:drive:readonly",
+      "drive:drive.search:readonly",
+      "drive:drive.metadata:readonly",
+      "drive:drive.version",
+      "drive:drive.version:readonly",
+      "drive:file",
+      "drive:file:readonly",
+      "drive:file:upload",
+      "drive:file:download",
+      "drive:file.like:readonly",
+      "drive:file.meta.sec_label.read_only",
+      "drive:file:view_record:readonly",
+      "drive:export:readonly",
+      "wiki:wiki",
+      "wiki:wiki:readonly"
+    ],
+    "user": ["docx:document:readonly"]
+  }
+}
+```
+
+### 2.2 权限说明
+
+| 分类         | 权限                                           | 用途                           |
+| ------------ | ---------------------------------------------- | ------------------------------ |
+| **消息**     | `im:message` / `send_as_bot` / `readonly`      | 收发飞书消息（基础能力）       |
+| **文档**     | `docx:document` / `create` / `write_only`      | 读写/创建/润色飞书文档         |
+| **文档转换** | `docx:document.block:convert`                  | Markdown ↔ 飞书 Block 格式转换 |
+| **云盘**     | `drive:drive` / `file` / `upload` / `download` | 文件管理、上传、下载           |
+| **云盘搜索** | `drive:drive.search:readonly`                  | 搜索云盘文件                   |
+| **知识库**   | `wiki:wiki` / `wiki:readonly`                  | 浏览和编辑知识库               |
+
+> ⚠️ `drive:permission`（权限管理）默认未包含，属于敏感操作。需要管理文档分享权限时手动添加。
+>
+> ⚠️ 导入权限后需要 **创建新版本并发布**，权限才会生效。部分权限可能需要管理员审批。
 
 ### 3. 配置 OpenClaw
 
