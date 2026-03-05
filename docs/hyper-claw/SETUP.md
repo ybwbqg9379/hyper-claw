@@ -647,6 +647,77 @@ Bot 需要文档权限才能读写：
 
 ---
 
+## 第三方模型 Fallback（DeepSeek）
+
+本地模型为主力，配置 DeepSeek V3 作为 fallback，当本地不可用时自动切换。
+
+### 获取 API Key
+
+1. 注册 [DeepSeek Platform](https://platform.deepseek.com/)
+2. 充值（最低 ¥10 / $2）
+3. 创建 API Key
+
+### 配置
+
+在 `openclaw.json` 添加：
+
+```json
+{
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com",
+        "apiKey": "你的DEEPSEEK_API_KEY",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-chat",
+            "name": "DeepSeek V3.2",
+            "reasoning": false,
+            "input": ["text"],
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "local/你的本地模型ID",
+        "fallbacks": ["deepseek/deepseek-chat"]
+      }
+    }
+  }
+}
+```
+
+> ⚠️ **api 必须是 `openai-completions`**，不是 `openai-responses`。DeepSeek 使用 OpenAI 兼容的 chat completions 接口。
+
+### 费用参考（2026.03）
+
+| 项目               | 价格                 |
+| ------------------ | -------------------- |
+| Input (cache miss) | $0.28/M tokens       |
+| Input (cache hit)  | $0.028/M tokens      |
+| Output             | $0.42/M tokens       |
+| **单次问答参考**   | **~$0.004（¥0.03）** |
+
+### 模型切换命令（飞书对话中）
+
+```
+/model deepseek/deepseek-chat    # 切换到 DeepSeek
+/model local/你的本地模型ID       # 切回本地
+/model                            # 查看当前模型
+/status                           # 查看完整状态
+```
+
+> 💡 `/model` 和 `/new` 是系统级静默命令，与普通对话分开处理。`/status` 会返回详细的运行状态。
+
+---
+
 ## 跨平台参考
 
 ### 配置文件路径
