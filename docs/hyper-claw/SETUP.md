@@ -336,9 +336,11 @@ pnpm start plugins install ./extensions/feishu
       "im:message.p2p_msg:readonly",
       "im:message.group_at_msg:readonly",
       "im:resource",
-      "contact:contact.base:readonly",
-      "im:chat.access_event.bot_p2p_chat:read",
+      "im:chat",
+      "im:chat:readonly",
       "im:chat.members:bot_access",
+      "im:chat.access_event.bot_p2p_chat:read",
+      "contact:contact.base:readonly",
       "docx:document",
       "docx:document:readonly",
       "docx:document:create",
@@ -359,7 +361,9 @@ pnpm start plugins install ./extensions/feishu
       "drive:file:view_record:readonly",
       "drive:export:readonly",
       "wiki:wiki",
-      "wiki:wiki:readonly"
+      "wiki:wiki:readonly",
+      "bitable:app",
+      "bitable:app:readonly"
     ],
     "user": ["docx:document:readonly"]
   }
@@ -371,6 +375,8 @@ pnpm start plugins install ./extensions/feishu
 | 分类         | 权限                                           | 用途                           |
 | ------------ | ---------------------------------------------- | ------------------------------ |
 | **消息**     | `im:message` / `send_as_bot` / `readonly`      | 收发飞书消息（基础能力）       |
+| **群聊**     | `im:chat` / `im:chat:readonly`                 | 获取群信息、群成员列表         |
+| **多维表格** | `bitable:app` / `bitable:app:readonly`         | 读写多维表格（Cron 报告必需）  |
 | **文档**     | `docx:document` / `create` / `write_only`      | 读写/创建/润色飞书文档         |
 | **文档转换** | `docx:document.block:convert`                  | Markdown ↔ 飞书 Block 格式转换 |
 | **云盘**     | `drive:drive` / `file` / `upload` / `download` | 文件管理、上传、下载           |
