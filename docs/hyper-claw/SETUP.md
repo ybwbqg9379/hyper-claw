@@ -718,6 +718,63 @@ Bot 需要文档权限才能读写：
 
 ---
 
+## 定时任务（Cron Job）
+
+OpenClaw 内置 Cron 调度器，可定时触发 Agent 执行任务并推送结果到群聊。
+
+### 创建定时任务
+
+```bash
+pnpm start cron add \
+  --name "每日客户对接汇总" \
+  --cron "10 8 * * *" \
+  --tz "Asia/Shanghai" \
+  --session isolated \
+  --message "使用 feishu-bitable skill 读取多维表格数据（app_token: X3hhwNvBsiGBwOkqLb3c8QCVngC, table_id: tblZEiToMPuHEK1X），分析所有客户数据，生成汇总报告。用中文回复。" \
+  --model "local/unsloth/Qwen3.5-4B-GGUF:Q4_K_M" \
+  --announce \
+  --channel feishu \
+  --to "oc_群聊ID" \
+  --exact
+```
+
+### 多账号飞书配置
+
+> ⚠️ 如果配置了多个飞书账号（main / company），**必须**在 `openclaw.json` 设置 `defaultAccount`，否则 cron delivery 会报 `Feishu account "default" not configured`：
+
+```json
+{
+  "channels": {
+    "feishu": {
+      "defaultAccount": "company"
+    }
+  }
+}
+```
+
+### 管理命令
+
+```bash
+pnpm start cron list                   # 查看所有定时任务
+pnpm start cron run <jobId>            # 手动触发
+pnpm start cron runs --id <jobId>      # 运行历史
+pnpm start cron edit <jobId> --message "新prompt"  # 修改
+pnpm start cron remove <jobId>         # 删除
+```
+
+### 踩坑记录
+
+| 问题                                      | 解决                                       |
+| ----------------------------------------- | ------------------------------------------ |
+| `Feishu account "default" not configured` | 设置 `channels.feishu.defaultAccount`      |
+| Bot 用 web_fetch 代替 feishu skill        | prompt 显式指定 skill 名和 token/table_id  |
+| 知识库文档读不了                          | 用 bitable skill + 精确 app_token/table_id |
+| `--to` 格式                               | 直接用 `oc_` 开头的群聊 ID                 |
+
+> 💡 定时任务需要 Mac 保持开机且 Gateway 运行。任务会持久化在 `~/.openclaw/cron/jobs.json`，重启不丢失。
+
+---
+
 ## 跨平台参考
 
 ### 配置文件路径
