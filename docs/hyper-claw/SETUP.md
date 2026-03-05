@@ -343,26 +343,20 @@ pnpm tui
 
 通过飞书机器人与 OpenClaw 对话，使用 WebSocket 长连接，无需公网 IP。
 
-### 1. 安装飞书插件
+### 1. 飞书插件（已内置）
 
-```bash
-pnpm start plugins install ./extensions/feishu
-```
+飞书插件位于 `extensions/feishu/`，Gateway 启动时**自动发现并加载**，无需手动安装。
 
-> [!WARNING]
-> 安装本地飞书插件后，必须从 `openclaw.json` 中移除内置 feishu 插件的声明，否则会出现 `duplicate plugin id detected` 警告：
+> [!CAUTION]
+> **不要运行** `pnpm start plugins install ./extensions/feishu`。该命令会将插件复制到 `~/.openclaw/extensions/feishu/`，
+> 导致两个物理路径都被发现，触发 `duplicate plugin id detected` 警告。
 >
-> ```jsonc
-> // openclaw.json — 删除这一项
-> "plugins": {
->   "entries": {
->     "feishu": { "enabled": true }  // ← 删除整个 feishu key
->   }
-> }
+> 如果误执行了，删除全局副本即可修复：
+>
+> ```bash
+> rm -rf ~/.openclaw/extensions/feishu
+> pnpm start gateway stop && pnpm start gateway install
 > ```
->
-> 本地扩展（`~/.openclaw/extensions/feishu/`）已通过 `openclaw.plugin.json` 注册 `id: "feishu"`，
-> 不需要在 `plugins.entries` 中重复声明。
 
 ### 2. 创建飞书应用
 
