@@ -429,6 +429,30 @@ pnpm start pairing approve feishu <CODE>
 
 详细配置参见 [docs/channels/feishu.md](../channels/feishu.md)。
 
+### 6. 多租户参考信息
+
+#### hyper-claw-enterprise（company 账号）
+
+| 项目    | 值                                    |
+| ------- | ------------------------------------- |
+| 群聊 ID | `oc_92bbbe49360822cb3bd4b5fe776307d3` |
+| 王戈多  | `8e749676`                            |
+| 万佳    | `6927gc1a`                            |
+| Bowen   | `2gcg1185`                            |
+| 蔡毅    | `d1278b9a`                            |
+
+#### raxon-claw（raxon 账号）
+
+| 项目           | 值                                    |
+| -------------- | ------------------------------------- |
+| App ID         | `cli_a9238e578ef95cc9`                |
+| 群聊 ID        | `oc_b5b9f7575045e34857a85026930de6fb` |
+| 蔡毅           | `47e59gg5`                            |
+| 刘皓程 (Clark) | `f6dcae57`                            |
+| 杨博文         | `agc183d2`                            |
+
+> 💡 用户 ID 跨租户不同。同一个人在不同飞书组织下 ID 不一样。
+
 ---
 
 ## Skills 安装
