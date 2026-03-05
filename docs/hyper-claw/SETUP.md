@@ -366,9 +366,6 @@ Skills 扩展 agent 的能力。以下是推荐安装的跨平台 skills：
 brew install steipete/tap/gogcli      # Google Workspace (Calendar/Gmail/Drive)
 brew install steipete/tap/summarize   # 文档/网页摘要
 # gh 通常已装：brew install gh
-
-# MCP 工具管理器（联网搜索需要）
-npm install -g mcporter
 ```
 
 安装后 skills 自动就绪（`pnpm start skills list` 可查看状态）。
@@ -391,37 +388,56 @@ gog auth list
 
 ## 联网搜索（web_search）
 
-OpenClaw 内置 `web_fetch`（抓取 URL，无需配置）和 `web_search`（主动搜索，需后端）。
+OpenClaw 内置两个 Web 工具：
 
-### 方案：web-search-free（免费、无 API Key）
+- **`web_fetch`** — 抓取指定 URL 内容（HTML → Markdown），**无需任何配置**，开箱即用
+- **`web_search`** — 主动搜索互联网，需要配置搜索后端
 
-通过 Exa MCP 服务实现免费联网搜索。
+### 方案：Brave Search API（推荐）
+
+Brave 提供 **$5/月免费额度**（≈1000 次搜索），是目前与本地模型兼容的最佳免费方案。
 
 ```bash
-# 1. 安装 skill
-npx clawhub install web-search-free
+# 1. 注册 Brave Search API：https://brave.com/search/api/
+#    选择 "Search" 计划（不是 "Answers"）
+#    绑卡后设 $5 monthly spend cap（确保不额外扣费）
 
-# 2. 安装 mcporter（如果还没装）
-npm install -g mcporter
+# 2. 配置 API Key（二选一）：
 
-# 3. 配置 Exa MCP server
-mcporter config add exa "https://mcp.exa.ai/mcp?tools=web_search_exa,web_search_advanced_exa,get_code_context_exa,crawling_exa,company_research_exa,people_search_exa,deep_researcher_start,deep_researcher_check"
+# 方式 A：交互式配置
+openclaw configure --section web
 
-# 4. 验证
-mcporter list exa
+# 方式 B：手动添加到 openclaw.json
+# tools.web.search.provider = "brave"
+# tools.web.search.apiKey = "你的API_KEY"
 ```
 
-搜索工具：
+配置示例（`~/.openclaw/openclaw.json`）：
 
-| 工具                      | 用途                              |
-| ------------------------- | --------------------------------- |
-| `web_search_exa`          | 通用网页搜索                      |
-| `web_search_advanced_exa` | 带日期/域名/分类过滤的高级搜索    |
-| `get_code_context_exa`    | 代码搜索（GitHub/Stack Overflow） |
-| `company_research_exa`    | 企业调研                          |
-| `deep_researcher_start`   | AI 深度研究报告（15s-3min）       |
+```json
+{
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "brave",
+        "apiKey": "你的BRAVE_API_KEY",
+        "maxResults": 5
+      }
+    }
+  }
+}
+```
 
-> 💡 `web_fetch` 无需任何配置，给 AI 发链接它就能读取内容。`web-search-free` skill 提供主动搜索能力。
+配置后重启 Gateway 生效：
+
+```bash
+pnpm start gateway stop && pnpm start gateway install
+```
+
+> ⚠️ **MCP 方案不适用于本地模型**：ClawHub 上的 `web-search-free` 等 MCP skill 依赖 agent 执行 `mcporter call` 命令，本地小模型（如 Qwen3.5-4B）无法正确调用。必须使用 OpenClaw 内置的 `web_search` 工具 + Brave/Perplexity provider。
+>
+> 💡 `web_fetch` 无需任何配置，给 AI 发链接它就能读取内容。`web_search` 提供主动搜索能力。
 
 ---
 
