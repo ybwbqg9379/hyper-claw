@@ -132,14 +132,20 @@ cp ~/.openclaw/workspace/{USER,AGENTS,TOOLS,HEARTBEAT}.md ~/.openclaw/workspace-
 
 > 💡 这些文件不在 git 仓库内，不会影响 upstream 合并。模板副本保存在 `docs/hyper-claw/workspace-templates/`。
 
-### 双 Agent 架构
+### 多 Agent 架构（三 Bot 独立隔离）
 
-项目使用 **执行者 + 策略师** 双 Agent 模式，共享一个飞书 Bot：
+项目使用 **三个飞书 Bot + 策略师** 架构，每个 Bot 对应独立的 agent 和 workspace，记忆完全隔离：
 
-| Agent             | ID               | Workspace                          | 职责                           |
-| ----------------- | ---------------- | ---------------------------------- | ------------------------------ |
-| **Claw 🦞**       | `claw` (default) | `~/.openclaw/workspace`            | 日常操作、日历、TODO、文件管理 |
-| **Strategist 🧠** | `strategist`     | `~/.openclaw/workspace-strategist` | 深度分析、研究报告、方案设计   |
+| Agent               | ID                       | Workspace                            | 飞书 Bot              | 职责                  |
+| ------------------- | ------------------------ | ------------------------------------ | --------------------- | --------------------- |
+| **Personal 🦞**     | `personal`               | `~/.openclaw/workspace-personal`     | hyper-claw            | 个人助手              |
+| **HyperCreator 🏢** | `hypercreator` (default) | `~/.openclaw/workspace-hypercreator` | hyper-claw-enterprise | HyperCreator 企业助手 |
+| **RaxonWood 🌲**    | `raxonwood`              | `~/.openclaw/workspace-raxonwood`    | raxon-claw            | RaxonWood 企业助手    |
+| **Strategist 🧠**   | `strategist`             | `~/.openclaw/workspace-strategist`   | —                     | 深度分析、研究报告    |
+
+> [!IMPORTANT]
+> 每个 Bot 的记忆文件（`memory/*.md`）存储在各自的 workspace 目录下，**绝对不能交叉**。
+> 这通过 `bindings` 配置实现——每个飞书账号绑定到对应的 agent，agent 决定 workspace 路径。
 
 在 TUI 中用 `/agent strategist` 切换到策略师模式。
 
@@ -161,10 +167,30 @@ cp ~/.openclaw/workspace/{USER,AGENTS,TOOLS,HEARTBEAT}.md ~/.openclaw/workspace-
       }
     },
     "list": [
-      { "id": "claw", "default": true, "workspace": "~/.openclaw/workspace" },
+      { "id": "personal", "workspace": "~/.openclaw/workspace-personal" },
+      {
+        "id": "hypercreator",
+        "default": true,
+        "workspace": "~/.openclaw/workspace-hypercreator"
+      },
+      { "id": "raxonwood", "workspace": "~/.openclaw/workspace-raxonwood" },
       { "id": "strategist", "workspace": "~/.openclaw/workspace-strategist" }
     ]
-  }
+  },
+  "bindings": [
+    {
+      "agentId": "personal",
+      "match": { "channel": "feishu", "accountId": "personal" }
+    },
+    {
+      "agentId": "hypercreator",
+      "match": { "channel": "feishu", "accountId": "hypercreator" }
+    },
+    {
+      "agentId": "raxonwood",
+      "match": { "channel": "feishu", "accountId": "raxonwood" }
+    }
+  ]
 }
 ```
 
@@ -394,13 +420,15 @@ pnpm start plugins install ./extensions/feishu
   "channels": {
     "feishu": {
       "enabled": true,
-      "dmPolicy": "pairing",
       "streaming": true,
       "accounts": {
-        "main": {
+        "personal": {
           "appId": "cli_你的AppID",
           "appSecret": "你的AppSecret",
           "botName": "Hyper Claw AI"
+        },
+        "default": {
+          "dmPolicy": "pairing"
         }
       }
     }
@@ -431,7 +459,7 @@ pnpm start pairing approve feishu <CODE>
 
 ### 6. 多租户参考信息
 
-#### hyper-claw-enterprise（company 账号）
+#### hyper-claw-enterprise（hypercreator 账号）
 
 | 项目    | 值                                    |
 | ------- | ------------------------------------- |
@@ -441,7 +469,7 @@ pnpm start pairing approve feishu <CODE>
 | Bowen   | `2gcg1185`                            |
 | 蔡毅    | `d1278b9a`                            |
 
-#### raxon-claw（raxon 账号）
+#### raxon-claw（raxonwood 账号）
 
 | 项目           | 值                                    |
 | -------------- | ------------------------------------- |
@@ -551,34 +579,58 @@ pnpm start gateway stop && pnpm start gateway install
 
 ---
 
-## 多账号部署（个人 + 公司飞书）
+## 多账号部署（个人 + 企业飞书）
 
-一个 Gateway 可同时服务多个飞书租户。在 `openclaw.json` 的 `channels.feishu.accounts` 下添加多个账号：
+一个 Gateway 可同时服务多个飞书租户。在 `openclaw.json` 的 `channels.feishu.accounts` 下添加多个账号，并通过 `bindings` 将每个账号路由到独立 agent：
 
 ```json
 {
   "channels": {
     "feishu": {
       "accounts": {
-        "main": {
+        "personal": {
           "appId": "cli_个人AppID",
           "appSecret": "个人AppSecret",
           "botName": "Hyper Claw AI"
         },
-        "company": {
-          "appId": "cli_公司AppID",
-          "appSecret": "公司AppSecret",
+        "hypercreator": {
+          "appId": "cli_HyperCreatorAppID",
+          "appSecret": "HyperCreatorAppSecret",
           "botName": "Hyper Claw AI"
+        },
+        "raxonwood": {
+          "appId": "cli_RaxonWoodAppID",
+          "appSecret": "RaxonWoodAppSecret"
         }
-      }
+      },
+      "defaultAccount": "hypercreator"
     }
-  }
+  },
+  "bindings": [
+    {
+      "agentId": "personal",
+      "match": { "channel": "feishu", "accountId": "personal" }
+    },
+    {
+      "agentId": "hypercreator",
+      "match": { "channel": "feishu", "accountId": "hypercreator" }
+    },
+    {
+      "agentId": "raxonwood",
+      "match": { "channel": "feishu", "accountId": "raxonwood" }
+    }
+  ]
 }
 ```
 
-每个账号的用户需要独立 pairing（`pnpm start pairing approve feishu <CODE>`）。Session 按 `account + channel + peer` 自动隔离。
+每个账号的用户需要独立 pairing（`pnpm start pairing approve feishu <CODE>`）。Session 和记忆按 agent 完全隔离。
 
 > ⚠️ 公司飞书应用发布可能需要管理员审批。
+
+> [!CAUTION]
+> **踩坑经验（2026.03.05）**：如果没有 `bindings` 配置，所有飞书账号会路由到默认 agent，
+> 导致**所有 Bot 共享同一个 workspace 和 memory 目录**，记忆文件交叉污染。
+> **修复**：为每个飞书账号配置 `bindings`，绑定到独立 agent（各自有独立 workspace）。
 
 ### 多账号工具路由（重要）
 
@@ -592,23 +644,23 @@ pnpm start gateway stop && pnpm start gateway install
 
 **每个 Bot 会话天然知道自己属于哪个账号**（`agentAccountId`），各场景的行为：
 
-| 场景                  | `agentAccountId` | 工具使用的账号          |
-| --------------------- | ---------------- | ----------------------- |
-| raxon-claw 单聊/群聊  | `"raxon"`        | raxon                   |
-| company bot 单聊/群聊 | `"company"`      | company                 |
-| Cron Job → company 群 | `"company"`      | company                 |
-| Cron Job → raxon 群   | `"raxon"`        | raxon                   |
-| `agentAccountId` 为空 | `undefined`      | → 兜底 `defaultAccount` |
+| 场景                       | `agentAccountId` | 工具使用的账号          |
+| -------------------------- | ---------------- | ----------------------- |
+| raxon-claw 单聊/群聊       | `"raxonwood"`    | raxonwood               |
+| hypercreator bot 单聊/群聊 | `"hypercreator"` | hypercreator            |
+| Cron Job → hypercreator 群 | `"hypercreator"` | hypercreator            |
+| Cron Job → raxonwood 群    | `"raxonwood"`    | raxonwood               |
+| `agentAccountId` 为空      | `undefined`      | → 兜底 `defaultAccount` |
 
 > [!CAUTION]
 > **踩坑经验（2026.03）**：原始代码中 `defaultAccount`（全局配置）的优先级高于 `agentAccountId`（会话上下文），
-> 导致**所有飞书工具调用都使用 company 账号**，无论消息来自哪个 Bot。
-> 表现为：raxon-claw 调 `feishu_wiki` 返回 company 的知识库，或返回空（因为 company 没有 raxon 的知识库权限）。
+> 导致**所有飞书工具调用都使用 hypercreator 账号**，无论消息来自哪个 Bot。
+> 表现为：raxon-claw 调 `feishu_wiki` 返回 hypercreator 的知识库，或返回空。
 > **修复**：交换 `tool-account.ts` 中两行的优先级顺序（`agentAccountId` 优先于 `defaultAccount`）。
 
 ### 多账号权限独立
 
-每个飞书账号（main / company / raxon）对应**独立的 App**，权限完全隔离：
+每个飞书账号（personal / hypercreator / raxonwood）对应**独立的 App**，权限完全隔离：
 
 - **App 权限**（scope）需要在每个 App 的飞书开放平台单独配置
 - **文档/知识库/多维表格权限**需要分别添加对应 Bot 为成员
@@ -713,7 +765,7 @@ Bot 不会自动看到所有知识库空间，需要手动授权：
 
 1. **App 权限**：确保 Bot 应用已开通 `wiki:wiki` + `wiki:wiki:readonly`（见上方权限配置）
 2. **知识库成员**：打开知识库空间 → **设置** → **成员设置** → **知识库成员** → 添加 Bot
-3. **多账号注意**：每个飞书账号（main / company / raxon）是**独立的 App**，需要分别添加到对应知识库
+3. **多账号注意**：每个飞书账号（personal / hypercreator / raxonwood）是**独立的 App**，需要分别添加到对应知识库
 
 > ⚠️ **账号路由**：`feishu_wiki` 工具使用 agent 绑定的账号（`agentAccountId`），而非全局 `defaultAccount`。
 > 如果 Bot 返回空结果或错误的知识库列表，检查所用账号是否已被添加为知识库成员。
@@ -819,13 +871,13 @@ pnpm start cron add \
 
 ### 多账号飞书配置
 
-> ⚠️ 如果配置了多个飞书账号（main / company），**必须**在 `openclaw.json` 设置 `defaultAccount`，否则 cron delivery 会报 `Feishu account "default" not configured`：
+> ⚠️ 如果配置了多个飞书账号（personal / hypercreator / raxonwood），**必须**在 `openclaw.json` 设置 `defaultAccount`，否则 cron delivery 会报 `Feishu account "default" not configured`：
 
 ```json
 {
   "channels": {
     "feishu": {
-      "defaultAccount": "company"
+      "defaultAccount": "hypercreator"
     }
   }
 }
