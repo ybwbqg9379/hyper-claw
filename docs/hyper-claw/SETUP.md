@@ -727,16 +727,21 @@ OpenClaw 内置 Cron 调度器，可定时触发 Agent 执行任务并推送结�
 ```bash
 pnpm start cron add \
   --name "每日客户对接汇总" \
-  --cron "10 8 * * *" \
+  --cron "0 8 * * *" \
   --tz "Asia/Shanghai" \
   --session isolated \
-  --message "使用 feishu-bitable skill 读取多维表格数据（app_token: X3hhwNvBsiGBwOkqLb3c8QCVngC, table_id: tblZEiToMPuHEK1X），分析所有客户数据，生成汇总报告。用中文回复。" \
-  --model "local/unsloth/Qwen3.5-4B-GGUF:Q4_K_M" \
+  --message "你的prompt内容" \
+  --model "deepseek/deepseek-chat" \
   --announce \
   --channel feishu \
   --to "oc_群聊ID" \
   --exact
 ```
+
+> ⚠️ **模型选择**：定时报告建议用 **DeepSeek**（`deepseek/deepseek-chat`），不要用本地 4B 模型。原因：
+>
+> - 4B 无法遵循复杂指令（如"不超过 5 项"、"静默池"等规则）
+> - DeepSeek 每次约 ¥0.05，每天一次完全可接受
 
 ### 多账号飞书配置
 
@@ -752,6 +757,31 @@ pnpm start cron add \
 }
 ```
 
+### 飞书 @提醒
+
+Cron 报告可以 @群成员。在 prompt 中提供姓名→用户ID 映射表：
+
+```
+【负责人@提醒映射表】
+在报告中提到负责人时，使用以下格式原样输出：
+王戈多 写作: <at user_id="8e749676">王戈多</at>
+万佳 写作: <at user_id="6927gc1a">万佳</at>
+```
+
+> 用户 ID 在飞书管理后台 → 成员管理 → 点击用户 → 基本信息 → 用户 ID 获取。
+
+### Prompt 工程要点
+
+| 要点              | 说明                                                    |
+| ----------------- | ------------------------------------------------------- |
+| 指定 skill 和参数 | `feishu-bitable skill（app_token: xxx, table_id: xxx）` |
+| 禁止代码输出      | DeepSeek 会输出分析代码，需明确禁止                     |
+| 限制条目数        | "不超过 5 项"、"不超过 3 项"                            |
+| 内部术语说明      | 如"哈拉推进"等 Bot 不懂的词需解释                       |
+| 格式模板          | 给出完整的输出模板（含标题、编号、空行）                |
+| 标题含日期        | `**X月X日 项目进度表追踪**`                             |
+| 段落间距          | 明确要求"每个大段落之间空一行"                          |
+
 ### 管理命令
 
 ```bash
@@ -759,6 +789,7 @@ pnpm start cron list                   # 查看所有定时任务
 pnpm start cron run <jobId>            # 手动触发
 pnpm start cron runs --id <jobId>      # 运行历史
 pnpm start cron edit <jobId> --message "新prompt"  # 修改
+pnpm start cron edit <jobId> --model "deepseek/deepseek-chat"  # 切模型
 pnpm start cron remove <jobId>         # 删除
 ```
 
@@ -770,6 +801,10 @@ pnpm start cron remove <jobId>         # 删除
 | Bot 用 web_fetch 代替 feishu skill        | prompt 显式指定 skill 名和 token/table_id  |
 | 知识库文档读不了                          | 用 bitable skill + 精确 app_token/table_id |
 | `--to` 格式                               | 直接用 `oc_` 开头的群聊 ID                 |
+| 4B 不遵循"不超过 5 项"                    | 改用 DeepSeek                              |
+| DeepSeek 输出 Python 代码                 | prompt 加"不要展示分析过程、代码"          |
+| 报告缺少段落间距                          | prompt 加"每个大段落标题前后各空一行"      |
+| @mention 不生效                           | 用 `<at user_id="xxx">姓名</at>` 格式      |
 
 > 💡 定时任务需要 Mac 保持开机且 Gateway 运行。任务会持久化在 `~/.openclaw/cron/jobs.json`，重启不丢失。
 
