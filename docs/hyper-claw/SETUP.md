@@ -84,6 +84,49 @@ pnpm mac:package
 
 ---
 
+## Workspace 文件体系
+
+OpenClaw 的 workspace 是 agent 的"大脑"——人格、行为规则、记忆全部存放在这里。
+
+### 文件结构
+
+```
+~/.openclaw/workspace/
+├── SOUL.md          # 角色灵魂：人格定义、行为准则、输出质量底线
+├── IDENTITY.md      # 快速参考卡：名字、角色、能力边界
+├── USER.md          # 用户画像：偏好、项目、工作习惯
+├── AGENTS.md        # 运行手册：会话启动流程、记忆管理规范
+├── TOOLS.md         # 工具清单：本地 LLM、渠道配置、常用命令
+├── MEMORY.md        # 长期记忆：稳定偏好、血泪教训、项目知识
+├── HEARTBEAT.md     # 心跳规范：定期检查清单
+└── memory/          # 每日流水日志
+    └── YYYY-MM-DD.md
+```
+
+### 从模板初始化
+
+```bash
+# 首次配置（如果 workspace 文件需要重置或新机器初始化）
+cp -r docs/hyper-claw/workspace-templates/* ~/.openclaw/workspace/
+```
+
+### 文件说明
+
+| 文件           | 层级   | 说明                                |
+| -------------- | ------ | ----------------------------------- |
+| `SOUL.md`      | 身份层 | 定义 agent 是谁、怎么做事、质量底线 |
+| `IDENTITY.md`  | 身份层 | 名片式快速参考                      |
+| `USER.md`      | 身份层 | 了解服务对象，随使用迭代更新        |
+| `AGENTS.md`    | 操作层 | 每次 session 的标准流程             |
+| `TOOLS.md`     | 操作层 | 环境特定的工具和配置记录            |
+| `HEARTBEAT.md` | 操作层 | 周期性自检任务清单                  |
+| `MEMORY.md`    | 知识层 | 蒸馏后的长期记忆（≤5000字）         |
+| `memory/*.md`  | 知识层 | 原始每日日志（仅加载今天+昨天）     |
+
+> 💡 这些文件不在 git 仓库内，不会影响 upstream 合并。模板副本保存在 `docs/hyper-claw/workspace-templates/`。
+
+---
+
 ## 本地 LLM 模型（llama.cpp）
 
 通过 `llama-server` 部署本地模型，OpenClaw 作为前端调用。零 API 费用，数据不出本机。

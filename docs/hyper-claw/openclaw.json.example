@@ -81,6 +81,7 @@
 
   "agents": {
     "defaults": {
+      "workspace": "~/.openclaw/workspace",
       "compaction": {
         "mode": "safeguard"
       },
@@ -89,6 +90,10 @@
         "maxConcurrent": 8
       }
     }
+  },
+
+  "session": {
+    "dmScope": "per-account-channel-peer"
   },
 
   "messages": {
