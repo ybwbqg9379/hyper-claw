@@ -523,6 +523,130 @@ pnpm start gateway stop && pnpm start gateway install
 
 ---
 
+## 多账号部署（个人 + 公司飞书）
+
+一个 Gateway 可同时服务多个飞书租户。在 `openclaw.json` 的 `channels.feishu.accounts` 下添加多个账号：
+
+```json
+{
+  "channels": {
+    "feishu": {
+      "accounts": {
+        "main": {
+          "appId": "cli_个人AppID",
+          "appSecret": "个人AppSecret",
+          "botName": "Hyper Claw AI"
+        },
+        "company": {
+          "appId": "cli_公司AppID",
+          "appSecret": "公司AppSecret",
+          "botName": "Hyper Claw AI"
+        }
+      }
+    }
+  }
+}
+```
+
+每个账号的用户需要独立 pairing（`pnpm start pairing approve feishu <CODE>`）。Session 按 `account + channel + peer` 自动隔离。
+
+> ⚠️ 公司飞书应用发布可能需要管理员审批。
+
+---
+
+## 安全加固（个人机器部署必读）
+
+在个人机器上部署 Bot 时，**必须**防止 Bot 读取本地私人文件：
+
+```json
+{
+  "tools": {
+    "fs": {
+      "workspaceOnly": true
+    }
+  }
+}
+```
+
+| 配置                     | 效果                                                                  |
+| ------------------------ | --------------------------------------------------------------------- |
+| `fs.workspaceOnly: true` | Bot 只能读写 `~/.openclaw/workspace/`，无法访问桌面、代码、个人文档等 |
+| `tools.deny: ["exec"]`   | 完全禁止终端命令（**谨慎使用**，会导致 CLI skills 失效）              |
+
+> 💡 推荐只开 `workspaceOnly`，不禁用 `exec`。这样 Bot 既安全又能正常使用 gog、gh 等 CLI 工具。
+
+---
+
+## 上下文管理与 Compaction 调优
+
+### 问题
+
+256K 上下文虽大，但默认 compaction 阈值太高（~240K），导致上下文膨胀到 80K+ tokens 时响应变慢（2 分钟+）。
+
+### 解决方案
+
+在 `openclaw.json` 中配置更早的 compaction 触发：
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "compaction": {
+        "reserveTokens": 200000,
+        "keepRecentTokens": 20000
+      }
+    }
+  }
+}
+```
+
+| 参数               | 默认值 | 推荐值   | 说明                                 |
+| ------------------ | ------ | -------- | ------------------------------------ |
+| `reserveTokens`    | 16384  | 200000   | 预留空间，值越大 compaction 越早触发 |
+| `keepRecentTokens` | 20000  | 20000    | compaction 后保留最近的 token 数     |
+| **实际触发点**     | ~240K  | **~56K** | `contextWindow - reserveTokens`      |
+
+### 性能参考（M4 Max, Qwen3.5-4B Q4_K_M）
+
+| 上下文大小    | prompt 处理速度 | 生成速度  | 体感延迟     |
+| ------------- | --------------- | --------- | ------------ |
+| < 30K tokens  | ~680 tok/s      | ~50 tok/s | **1-3 秒**   |
+| 50-70K tokens | ~300 tok/s      | ~30 tok/s | 5-10 秒      |
+| 80K+ tokens   | ~285 tok/s      | ~28 tok/s | **1-2 分钟** |
+
+> 💡 群聊中发 `/new` 可立即重置 session，上下文清零后响应恢复秒回。`/new` 是静默命令，不会发回复。
+
+---
+
+## 飞书群聊部署注意事项
+
+### 群聊权限
+
+公司飞书必须额外添加通讯录权限，否则群聊无法回复（私聊正常）：
+
+```
+contact:contact.base:readonly
+```
+
+> 个人飞书默认允许通讯录访问，公司飞书需显式授权。
+
+### 群聊使用方式
+
+- **必须 @ Bot** 才会回复（不会主动插话）
+- `/new` 重置 session（静默，不回复）
+- 群聊和私聊 session 完全隔离
+- 发图片 + @ 支持多模态识图
+
+### 飞书文档/多维表格共享给 Bot
+
+Bot 需要文档权限才能读写：
+
+1. 打开文档/多维表格 → **分享** → 搜索 Bot 应用名 → 添加
+2. 或创建共享文件夹，把文档放入后共享给 Bot
+3. 多维表格需额外权限：`bitable:app` + `bitable:app:readonly`
+
+---
+
 ## 跨平台参考
 
 ### 配置文件路径
