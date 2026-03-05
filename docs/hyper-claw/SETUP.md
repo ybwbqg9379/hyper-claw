@@ -136,12 +136,12 @@ cp ~/.openclaw/workspace/{USER,AGENTS,TOOLS,HEARTBEAT}.md ~/.openclaw/workspace-
 
 项目使用 **三个飞书 Bot + 策略师** 架构，每个 Bot 对应独立的 agent 和 workspace，记忆完全隔离：
 
-| Agent               | ID                   | Workspace                            | 飞书 Bot              | 职责                  |
-| ------------------- | -------------------- | ------------------------------------ | --------------------- | --------------------- |
-| **Personal 🦞**     | `personal` (default) | `~/.openclaw/workspace-personal`     | hyper-claw            | 个人助手              |
-| **HyperCreator 🏢** | `hypercreator`       | `~/.openclaw/workspace-hypercreator` | hyper-claw-enterprise | HyperCreator 企业助手 |
-| **RaxonWood 🌲**    | `raxonwood`          | `~/.openclaw/workspace-raxonwood`    | raxon-claw            | RaxonWood 企业助手    |
-| **Strategist 🧠**   | `strategist`         | `~/.openclaw/workspace-strategist`   | —                     | 深度分析、研究报告    |
+| Agent               | ID                   | Workspace                            | 飞书 Bot              | 职责                     |
+| ------------------- | -------------------- | ------------------------------------ | --------------------- | ------------------------ |
+| **Personal 🦞**     | `personal` (default) | `~/.openclaw/workspace-personal`     | hyper-claw            | 个人全能助手             |
+| **HyperCreator 🏢** | `hypercreator`       | `~/.openclaw/workspace-hypercreator` | hyper-claw-enterprise | AIGC 商业洞察 + 飞书运维 |
+| **RaxonWood 🌲**    | `raxonwood`          | `~/.openclaw/workspace-raxonwood`    | raxon-claw            | 量化交易顾问与分析       |
+| **Strategist 🧠**   | `strategist`         | `~/.openclaw/workspace-strategist`   | —                     | 深度分析、研究报告       |
 
 > [!IMPORTANT]
 > 每个 Bot 的记忆文件（`memory/*.md`）存储在各自的 workspace 目录下，**绝对不能交叉**。
@@ -150,9 +150,9 @@ cp ~/.openclaw/workspace/{USER,AGENTS,TOOLS,HEARTBEAT}.md ~/.openclaw/workspace-
 > [!TIP]
 > 每个 Bot 的 `SOUL.md` 应定制独立身份，而不是共用通用模板：
 >
-> - **personal**：个人全能助手（不绑定特定项目）
-> - **hypercreator**：HyperCreator 企业助手（AIGC 平台 + 商务运营）
-> - **raxonwood**：RaxonWood 量化交易助手（QuantTrading 专属）
+> - **personal**：个人全能助手（跨项目通用，不绑定特定业务）
+> - **hypercreator**：AIGC 商业运营助手（商业洞察分析 + 飞书文档管理运维）
+> - **raxonwood**：华尔街高级量化工程师（交易决策顾问、风控分析、期权策略）
 
 在 TUI 中用 `/agent strategist` 切换到策略师模式。
 
