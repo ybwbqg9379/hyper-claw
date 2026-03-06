@@ -258,15 +258,29 @@ Strategist agent 内嵌强制质量关卡（灵感来源：[Edict 三省六部�
 # Qwen3-8B (Q6_K, ~6GB)
 alias claw-qwen3='llama-server -hf Qwen/Qwen3-8B-GGUF:Q6_K -ngl 99 --port 1234 --host 127.0.0.1 -c 32768 --reasoning-format none --reasoning-budget 0 -np 2 --log-prefix --log-timestamps'
 
-# Qwen3.5-4B (Q4_K_M, ~2.5GB) — 推荐日常使用，256K 上下文，多模态视觉
-alias claw-qwen3-5-4B='llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 262144 --reasoning-format none --reasoning-budget 0 -np 2 --log-prefix --log-timestamps'
-
-# Qwen3.5-9B (Q4_K_M, ~5GB)
-alias claw-qwen3-5-9B='llama-server -hf unsloth/Qwen3.5-9B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 32768 --reasoning-format none --reasoning-budget 0 -np 2 --no-mmproj --log-prefix --log-timestamps'
+# Qwen3.5-4B / 9B 使用 function（切换时自动同步 openclaw.json，见下方说明）
+unalias claw-qwen3-5-4B 2>/dev/null; unalias claw-qwen3-5-9B 2>/dev/null
+claw-qwen3-5-4B() {
+  sed -i '' 's|"model": "local/unsloth/[^"]*"|"model": "local/unsloth/Qwen3.5-4B-GGUF:Q4_K_M"|' ~/.openclaw/openclaw.json
+  llama-server -hf unsloth/Qwen3.5-4B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 262144 --reasoning-format none --reasoning-budget 0 -np 2 --log-prefix --log-timestamps
+}
+claw-qwen3-5-9B() {
+  sed -i '' 's|"model": "local/unsloth/[^"]*"|"model": "local/unsloth/Qwen3.5-9B-GGUF:Q4_K_M"|' ~/.openclaw/openclaw.json
+  llama-server -hf unsloth/Qwen3.5-9B-GGUF:Q4_K_M -ngl 99 --port 1234 --host 127.0.0.1 -c 262144 --reasoning-format deepseek --reasoning-budget -1 -np 2 --log-prefix --log-timestamps
+}
 
 # DeepSeek-R1-8B (Q8_0, ~8.5GB) — 推理模型，thinking 开启
 alias claw-deepseek='llama-server -hf unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q8_0 -ngl 99 --port 1234 --host 127.0.0.1 -c 32768 --reasoning-format deepseek --reasoning-budget -1 -np 2 --log-prefix --log-timestamps'
 ```
+
+> [!CAUTION]
+> **踩坑经验（2026.03.06）**：OpenClaw 的 `/reset` 消息和 Bot 问候语中显示的模型名来自 `agents.defaults.model` 配置，
+> **不会自动检测** llama-server 实际加载的模型。如果你切换到 9B llama-server 但配置仍是 4B，Bot 会报告 4B。
+> **修复**：使用 function 代替 alias，在启动 llama-server 前用 `sed` 自动更新 `openclaw.json` 中的 model ID。
+> Gateway 对 `agents.defaults.model` 变更支持 **hot reload**，无需重启。
+>
+> **zsh 注意**：如果之前定义过同名 alias，`source ~/.zshrc` 时会报 `parse error near '()'`。
+> 在 function 前加 `unalias claw-qwen3-5-4B 2>/dev/null` 即可解决。
 
 <details>
 <summary>Windows PowerShell 等效命令（添加到 $PROFILE）</summary>
@@ -782,24 +796,35 @@ pnpm start gateway stop && pnpm start gateway install
 
 ## 安全加固（个人机器部署必读）
 
-在个人机器上部署 Bot 时，**必须**防止 Bot 读取本地私人文件：
+在个人机器上部署 Bot 时，**必须**防止 Bot 访问本地私人文件。推荐配置：
 
 ```json
 {
   "tools": {
     "fs": {
       "workspaceOnly": true
-    }
+    },
+    "deny": ["exec", "process"]
   }
 }
 ```
 
-| 配置                     | 效果                                                                  |
-| ------------------------ | --------------------------------------------------------------------- |
-| `fs.workspaceOnly: true` | Bot 只能读写 `~/.openclaw/workspace/`，无法访问桌面、代码、个人文档等 |
-| `tools.deny: ["exec"]`   | 完全禁止终端命令（**谨慎使用**，会导致 CLI skills 失效）              |
+| 配置                             | 效果                                                          |
+| -------------------------------- | ------------------------------------------------------------- |
+| `fs.workspaceOnly: true`         | 限制文件读写工具到 workspace 目录（`read`/`write`/`edit` 等） |
+| `tools.deny: ["exec","process"]` | 禁止 shell 命令执行，防止通过 `exec` 绕过文件限制             |
 
-> 💡 推荐只开 `workspaceOnly`，不禁用 `exec`。这样 Bot 既安全又能正常使用 gog、gh 等 CLI 工具。
+> [!CAUTION]
+> **踩坑经验（2026.03.06）**：`workspaceOnly: true` **只限制文件工具**（read/write/edit），
+> **不限制 `exec` 和 `process`**。Bot 仍然可以通过 `exec` 执行任意 shell 命令（如 `find /`、`cat` 等），
+> 绕过文件访问限制读取整台机器的文件。**必须同时配置 `tools.deny`** 才能真正封堵。
+
+**影响范围**：禁用 `exec`/`process` 后，以下功能**不受影响**：
+
+- ✅ 文件读写（workspace 内）、网页搜索、飞书工具、Memory、Skills
+- ❌ 所有 CLI skills（`gog`、`gh`、`summarize` 等）将无法使用
+
+> 💡 `tools.deny` 是全局配置，影响所有 agent。如需只限制特定 agent，在 `agents.list[].tools.deny` 中单独配置。
 
 ---
 
