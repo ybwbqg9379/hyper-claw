@@ -803,6 +803,41 @@ pnpm start gateway stop && pnpm start gateway install
 
 ---
 
+## Subagent 模型委派
+
+主对话使用本地模型（零成本），subagent 任务（BD pipeline 批量、内容生成 skill 调用等）自动路由到更强的云端模型。
+
+### 配置
+
+在 `openclaw.json` 的 `agents.defaults.subagents` 中添加 `model`：
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "model": "local/unsloth/Qwen3.5-4B-GGUF:Q4_K_M",
+      "subagents": {
+        "model": "deepseek/deepseek-chat",
+        "maxConcurrent": 8
+      }
+    }
+  }
+}
+```
+
+### 模型解析优先级
+
+| 优先级    | 来源                              | 说明                        |
+| --------- | --------------------------------- | --------------------------- |
+| 1（最高） | Job `model` 字段                  | Cron 任务显式指定           |
+| 2         | Agent `subagents.model`           | 特定 agent 的 subagent 模型 |
+| 3         | `agents.defaults.subagents.model` | 全局 subagent 默认模型      |
+| 4（最低） | `agents.defaults.model`           | 主模型 fallback             |
+
+> 💡 配置后无需手动 `/model` 切换。主对话走本地 4B，subagent 自动走 DeepSeek V3.2（每次约 ¥0.03）。
+
+---
+
 ## 上下文管理与 Compaction 调优
 
 ### 问题
