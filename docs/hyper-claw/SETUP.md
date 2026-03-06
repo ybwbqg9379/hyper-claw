@@ -556,6 +556,67 @@ brew install steipete/tap/summarize   # 文档/网页摘要
 
 安装后 skills 自动就绪（`pnpm start skills list` 可查看状态）。
 
+### 内容生成 Skills（baoyu-skills）
+
+来源：[JimLiu/baoyu-skills](https://github.com/JimLiu/baoyu-skills)，TS 脚本通过 `bun` 直接运行（**无需编译**）。
+
+| Skill                       | 说明                                               | Workflow       |
+| --------------------------- | -------------------------------------------------- | -------------- |
+| `baoyu-xhs-images`          | 小红书卡片图系列（9 风格 × 6 布局）                | `/xhs-images`  |
+| `baoyu-infographic`         | 专业信息图（20 布局 × 17 风格）                    | `/infographic` |
+| `baoyu-cover-image`         | 封面图（5 维定制系统）                             | `/cover`       |
+| `baoyu-slide-deck`          | 演示幻灯片 → .pptx/.pdf                            | `/slides`      |
+| `baoyu-comic`               | 知识漫画（5 画风 × 7 语调）                        | —              |
+| `baoyu-article-illustrator` | 文章智能配图（6 类型 × 8 风格）                    | —              |
+| `baoyu-image-gen`           | 多 Provider AI 图像生成（Google/OpenAI/DashScope） | —              |
+| `baoyu-translate`           | 三模式翻译（quick/normal/refined）                 | —              |
+| `baoyu-url-to-markdown`     | CDP 网页抓取转 Markdown                            | —              |
+| `baoyu-compress-image`      | 图片压缩                                           | —              |
+| `baoyu-format-markdown`     | Markdown 格式化 + 排版                             | —              |
+
+**依赖**：
+
+- **bun**（TS 运行时）：`brew install oven-sh/bun/bun` 或 `curl -fsSL https://bun.sh/install | bash`
+- **Gemini API Key**：图像生成类 skill 依赖 Google Gemini
+
+**API Key 配置**：
+
+```bash
+mkdir -p ~/.baoyu-skills
+cat > ~/.baoyu-skills/.env << 'EOF'
+GOOGLE_API_KEY=你的Gemini_API_Key
+GOOGLE_IMAGE_MODEL=gemini-3-pro-image-preview
+EOF
+```
+
+**品牌定制**（可选）：
+
+项目级 EXTEND.md 在 `.baoyu-skills/<skill-name>/EXTEND.md`，支持自定义色板和水印。已预配置 HyperCreator 品牌（紫色系 #6C5CE7）+ 水印。
+
+### 小红书自动化 Skill（XiaohongshuSkills）
+
+来源：[white0dew/XiaohongshuSkills](https://github.com/white0dew/XiaohongshuSkills)，通过 Chrome CDP 实现自动化。
+
+| 功能       | 说明                              | Workflow       |
+| ---------- | --------------------------------- | -------------- |
+| 自动发布   | 标题 + 正文 + 图片 → 一键发小红书 | `/xhs-publish` |
+| 内容搜索   | 按关键词搜索笔记 + 详情获取       | `/xhs-search`  |
+| 自动评论   | 对指定笔记发表一级评论            | `/xhs-search`  |
+| 数据看板   | 曝光/观看/点赞 → CSV 导出         | `/xhs-search`  |
+| 多账号管理 | Cookie 隔离，`--account` 切换     | —              |
+
+**依赖**：
+
+```bash
+pip3 install --break-system-packages requests websockets
+```
+
+**首次使用**：需登录小红书（扫码）：
+
+```bash
+cd skills/post-to-xhs && python scripts/cdp_publish.py login
+```
+
 ### Google Workspace 首次授权（gog）
 
 ```bash
