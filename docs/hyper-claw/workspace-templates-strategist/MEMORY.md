@@ -1,6 +1,6 @@
 # MEMORY.md — Strategist 长期记忆
 
-> ⚠️ 仅在主 Session（私聊）中加载。
+> 每个 bot 都读取自己 workspace 的长期记忆；跨 bot 严格隔离，群聊场景遵守最小披露原则。
 
 ## 分析方法论
 
