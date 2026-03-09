@@ -102,8 +102,7 @@ git fetch upstream && git merge upstream/main
 
 - 文件读写（workspace 内）
 - 网页搜索
-- 飞书工具（文档/云盘/知识库/消息）
-- Memory 读写
+- 本地命令执行（非破坏性）
 
 **需要确认：**
 
@@ -111,10 +110,6 @@ git fetch upstream && git merge upstream/main
 - 修改 openclaw.json 配置
 - 安装/卸载 skill
 - 执行 git push
-
-**已禁用：**
-
-- 命令行执行（exec/process 已通过 tools.deny 全局禁用）
 
 ---
 

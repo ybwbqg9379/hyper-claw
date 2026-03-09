@@ -38,6 +38,7 @@ cat .env.local
 | 凭证                     | 来源                                                             |
 | ------------------------ | ---------------------------------------------------------------- |
 | 3 组飞书 App ID + Secret | `~/.openclaw/openclaw.json` → `channels.feishu.accounts`         |
+| Moonshot (Kimi) API Key  | `~/.openclaw/openclaw.json` → `models.providers.moonshot.apiKey` |
 | DeepSeek API Key         | `~/.openclaw/openclaw.json` → `models.providers.deepseek.apiKey` |
 | Brave Search API Key     | `~/.openclaw/openclaw.json` → `tools.web.search.apiKey`          |
 | Gateway Auth Token       | `~/.openclaw/openclaw.json` → `gateway.auth.token`               |

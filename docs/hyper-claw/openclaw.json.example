@@ -1,26 +1,15 @@
 {
-  // =====================================================================
-  // Hyper-Claw OpenClaw 配置模板
-  // 复制到 ~/.openclaw/openclaw.json 并替换占位符
-  //
-  // 使用方法：
-  //   cp docs/hyper-claw/openclaw.json.example ~/.openclaw/openclaw.json
-  //   然后编辑替换 YOUR_* 占位符
-  //
-  // ⚠️ 不要把填入真实秘钥的文件提交到 git！
-  // =====================================================================
-
   "models": {
     "mode": "merge",
     "providers": {
       "local": {
         "baseUrl": "http://127.0.0.1:1234/v1",
         "apiKey": "local",
-        "api": "openai-responses",
+        "api": "openai-completions",
         "models": [
           {
-            "id": "Qwen/Qwen3-8B-GGUF:Q6_K",
-            "name": "Qwen3-8B Q6_K (Local)",
+            "id": "unsloth/Qwen3.5-4B-GGUF:Q4_K_M",
+            "name": "Qwen3.5-4B Q4_K_M (Local)",
             "reasoning": false,
             "input": ["text"],
             "cost": {
@@ -75,26 +64,121 @@
             "maxTokens": 4096
           }
         ]
+      },
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com",
+        "apiKey": "YOUR_DEEPSEEK_API_KEY",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-chat",
+            "name": "DeepSeek V3.2",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {
+              "input": 0.28,
+              "output": 0.42,
+              "cacheRead": 0.028,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          }
+        ]
+      },
+      "moonshot": {
+        "baseUrl": "https://api.moonshot.cn/v1",
+        "apiKey": "YOUR_MOONSHOT_API_KEY",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "kimi-k2.5",
+            "name": "Kimi K2.5",
+            "reasoning": false,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0.28,
+              "output": 0.42,
+              "cacheRead": 0.028,
+              "cacheWrite": 0
+            },
+            "contextWindow": 131072,
+            "maxTokens": 8192
+          }
+        ]
       }
     }
   },
 
   "agents": {
     "defaults": {
-      "workspace": "~/.openclaw/workspace",
+      "model": "local/unsloth/Qwen3.5-4B-GGUF:Q4_K_M",
+      "workspace": "~/.openclaw/workspace-personal",
       "compaction": {
-        "mode": "safeguard"
+        "mode": "safeguard",
+        "reserveTokens": 200000,
+        "keepRecentTokens": 20000
+      },
+      "heartbeat": {
+        "every": "30m",
+        "target": "last"
       },
       "maxConcurrent": 4,
       "subagents": {
+        "model": "moonshot/kimi-k2.5",
         "maxConcurrent": 8
       }
+    },
+    "list": [
+      {
+        "id": "personal",
+        "default": true,
+        "workspace": "~/.openclaw/workspace-personal"
+      },
+      {
+        "id": "hypercreator",
+        "workspace": "~/.openclaw/workspace-hypercreator"
+      },
+      {
+        "id": "raxonwood",
+        "workspace": "~/.openclaw/workspace-raxonwood"
+      },
+      {
+        "id": "strategist",
+        "workspace": "~/.openclaw/workspace-strategist"
+      }
+    ]
+  },
+
+  "tools": {
+    "deny": ["exec", "process"],
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "brave",
+        "apiKey": "YOUR_BRAVE_API_KEY",
+        "maxResults": 5
+      }
+    },
+    "fs": {
+      "workspaceOnly": true
     }
   },
 
-  "session": {
-    "dmScope": "per-account-channel-peer"
-  },
+  "bindings": [
+    {
+      "agentId": "personal",
+      "match": { "channel": "feishu", "accountId": "personal" }
+    },
+    {
+      "agentId": "hypercreator",
+      "match": { "channel": "feishu", "accountId": "hypercreator" }
+    },
+    {
+      "agentId": "raxonwood",
+      "match": { "channel": "feishu", "accountId": "raxonwood" }
+    }
+  ],
 
   "messages": {
     "ackReactionScope": "group-mentions"
@@ -107,20 +191,38 @@
     "ownerDisplay": "raw"
   },
 
+  "session": {
+    "dmScope": "per-account-channel-peer"
+  },
+
   "channels": {
     "feishu": {
       "enabled": true,
       "streaming": true,
       "accounts": {
-        "main": {
+        "personal": {
           "appId": "YOUR_FEISHU_APP_ID",
           "appSecret": "YOUR_FEISHU_APP_SECRET",
-          "botName": "Hyper Claw AI"
+          "botName": "Hyper Claw AI",
+          "groupPolicy": "open"
         },
         "default": {
-          "dmPolicy": "pairing"
+          "dmPolicy": "pairing",
+          "groupPolicy": "open"
+        },
+        "hypercreator": {
+          "appId": "YOUR_FEISHU_APP_ID",
+          "appSecret": "YOUR_FEISHU_APP_SECRET",
+          "botName": "Hyper Claw AI",
+          "groupPolicy": "open"
+        },
+        "raxonwood": {
+          "appId": "YOUR_FEISHU_APP_ID",
+          "appSecret": "YOUR_FEISHU_APP_SECRET",
+          "groupPolicy": "open"
         }
-      }
+      },
+      "defaultAccount": "personal"
     }
   },
 
@@ -128,6 +230,14 @@
     "port": 18789,
     "mode": "local",
     "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "YOUR_GATEWAY_TOKEN"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
     "nodes": {
       "denyCommands": [
         "camera.snap",

@@ -12,16 +12,6 @@
 - 独立开发者 / 技术创业者
 - 涉猎广泛：量化交易系统、AI 内容平台、视频生成、开源项目
 - 主要技术栈：TypeScript, Python, Next.js, Node.js
-- 使用 upstream + fork 模式管理多个开源项目
-
-## 当前项目
-
-| 项目         | 说明                       | 状态   |
-| ------------ | -------------------------- | ------ |
-| HyperClaw    | OpenClaw fork，AI 助手平台 | 活跃   |
-| QuantTrading | 量化期权交易系统           | 活跃   |
-| HyperCreator | 多模态 AI 内容生成平台     | 活跃   |
-| HyperCut     | 开源视频编辑工具           | 维护中 |
 
 ## 偏好
 
@@ -29,7 +19,6 @@
 - 重视代码质量和文档完善
 - 喜欢先想清楚再动手，但一旦决定就快速推进
 - 习惯中文沟通，但代码和 commit message 使用英文
-- 偏好 Conventional Commits 格式
 
 ## 工作节奏
 
