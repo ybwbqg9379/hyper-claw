@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, resolve } from "node:path";
 import { basename } from "node:path";
+import * as path from "node:path";
 import type * as Lark from "@larksuiteoapi/node-sdk";
 import { Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "../runtime-api.js";
@@ -875,6 +876,53 @@ async function readDoc(client: Lark.Client, docToken: string) {
   };
 }
 
+function resolveWorkspaceOutputPath(workspaceDir: string | undefined, outputPath: string): string {
+  if (!workspaceDir?.trim()) {
+    throw new Error("feishu_doc export_text requires workspaceDir in tool context");
+  }
+  const trimmed = outputPath.trim();
+  if (!trimmed) {
+    throw new Error("output_path is required");
+  }
+
+  const candidate = path.isAbsolute(trimmed)
+    ? path.resolve(trimmed)
+    : path.resolve(workspaceDir, trimmed);
+  const relative = path.relative(workspaceDir, candidate);
+  if (!relative || relative === "") {
+    return candidate;
+  }
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error("output_path must stay within the current workspace");
+  }
+  return candidate;
+}
+
+async function exportDocTextToWorkspace(
+  client: Lark.Client,
+  docToken: string,
+  outputPath: string,
+  workspaceDir: string | undefined,
+) {
+  const doc = await readDoc(client, docToken);
+  const content = typeof doc.content === "string" ? doc.content : "";
+  const absolutePath = resolveWorkspaceOutputPath(workspaceDir, outputPath);
+  await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+  await fs.writeFile(absolutePath, content, "utf-8");
+
+  return {
+    success: true,
+    title: doc.title,
+    output_path: absolutePath,
+    workspace_relative_path: path.relative(workspaceDir!, absolutePath).replace(/\\/g, "/"),
+    chars: content.length,
+    lines: content ? content.split("\n").length : 0,
+    revision_id: doc.revision_id,
+    block_count: doc.block_count,
+    ...(doc.hint ? { hint: doc.hint } : {}),
+  };
+}
+
 async function createDoc(
   client: Lark.Client,
   title: string,
@@ -1389,7 +1437,7 @@ export function registerFeishuDocTools(api: OpenClawPluginApi) {
           name: "feishu_doc",
           label: "Feishu Doc",
           description:
-            "Feishu document operations. Actions: read, write, append, insert, create, list_blocks, get_block, update_block, delete_block, create_table, write_table_cells, create_table_with_values, insert_table_row, insert_table_column, delete_table_rows, delete_table_columns, merge_table_cells, upload_image, upload_file, color_text",
+            "Feishu document operations. Actions: read, export_text, write, append, insert, create, list_blocks, get_block, update_block, delete_block, create_table, write_table_cells, create_table_with_values, insert_table_row, insert_table_column, delete_table_rows, delete_table_columns, merge_table_cells, upload_image, upload_file, color_text",
           parameters: FeishuDocSchema,
           async execute(_toolCallId, params) {
             const p = params as FeishuDocExecuteParams;
@@ -1398,6 +1446,15 @@ export function registerFeishuDocTools(api: OpenClawPluginApi) {
               switch (p.action) {
                 case "read":
                   return json(await readDoc(client, p.doc_token));
+                case "export_text":
+                  return json(
+                    await exportDocTextToWorkspace(
+                      client,
+                      p.doc_token,
+                      p.output_path,
+                      ctx.workspaceDir,
+                    ),
+                  );
                 case "write":
                   return json(
                     await writeDoc(

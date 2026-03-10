@@ -22,6 +22,20 @@ From URL `https://xxx.feishu.cn/docx/ABC123def` → `doc_token` = `ABC123def`
 
 Returns: title, plain text content, block statistics. Check `hint` field - if present, structured content (tables, images) exists that requires `list_blocks`.
 
+### Export Document Text To Workspace File
+
+```json
+{
+  "action": "export_text",
+  "doc_token": "ABC123def",
+  "output_path": "memory/daily-trade-digest/20260309/raw/doc.txt"
+}
+```
+
+Writes the plain text content directly into a workspace file and returns a small metadata payload
+instead of the full document body. Use this for very large documents that would otherwise blow up
+tool-result context. `output_path` should stay inside the current workspace.
+
 ### Write Document (Replace All)
 
 ```json

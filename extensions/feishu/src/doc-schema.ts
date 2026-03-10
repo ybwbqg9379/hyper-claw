@@ -20,6 +20,14 @@ export const FeishuDocSchema = Type.Union([
     doc_token: Type.String({ description: "Document token (extract from URL /docx/XXX)" }),
   }),
   Type.Object({
+    action: Type.Literal("export_text"),
+    doc_token: Type.String({ description: "Document token (extract from URL /docx/XXX)" }),
+    output_path: Type.String({
+      description:
+        "Workspace-relative output path to write the plain text content into, for example memory/daily-trade-digest/20260309/raw/doc.md",
+    }),
+  }),
+  Type.Object({
     action: Type.Literal("write"),
     doc_token: Type.String({ description: "Document token" }),
     content: Type.String({
