@@ -251,10 +251,14 @@
   },
 
   "plugins": {
-    "allow": ["feishu"],
+    "allow": ["feishu", "hyper-claw-taskboard"],
     "entries": {
       "feishu": {
         "enabled": true
+      },
+      "hyper-claw-taskboard": {
+        "enabled": true,
+        "config": {}
       }
     }
   }

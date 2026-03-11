@@ -1,0 +1,79 @@
+{
+  "id": "hyper-claw-taskboard",
+  "name": "Hyper Claw Taskboard",
+  "description": "Feishu Bitable taskboard commands and agent tools for Hyper Claw multi-agent workflows.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "defaultBoard": {
+        "type": "string"
+      },
+      "boards": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "agentId": {
+              "type": "string"
+            },
+            "accountId": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "appToken": {
+              "type": "string"
+            },
+            "tableId": {
+              "type": "string"
+            },
+            "fieldMap": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "priority": {
+                  "type": "string"
+                },
+                "owner": {
+                  "type": "string"
+                },
+                "dueAt": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": ["appToken", "tableId"]
+        }
+      }
+    }
+  },
+  "uiHints": {
+    "defaultBoard": {
+      "label": "Default board key",
+      "help": "Fallback board key used when no current agent/account match is found."
+    },
+    "boards": {
+      "label": "Boards",
+      "help": "Per-agent or per-account Feishu Bitable taskboards."
+    }
+  }
+}

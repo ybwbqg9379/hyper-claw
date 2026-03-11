@@ -73,7 +73,17 @@ git fetch upstream && git merge upstream/main
 
 ### 首次初始化
 
-用户说"创建任务看板"时，用 `feishu_bitable` 工具创建多维表格。
+优先使用内置命令初始化，而不是手工拼 `feishu_bitable_*`：
+
+```text
+/taskboard create
+/taskboard link <bitable-url>
+/taskboard status
+/taskboard list open
+```
+
+`hyper-claw-taskboard` 插件会为当前 agent/账号绑定一个标准任务看板。
+创建模式会自动生成标准字段；绑定模式用于接入已有的 bitable。
 
 **推荐字段结构：**
 
@@ -89,12 +99,12 @@ git fetch upstream && git merge upstream/main
 
 ### 日常操作
 
-- **添加任务**：用户说"记一下 XXX"或"加个任务 XXX" -> 写入 bitable
-- **查看看板**：用户说"看看任务" -> 列出待办和进行中的任务
-- **更新状态**：用户说"XXX 完成了" -> 更新状态字段
+- **添加任务**：优先用 `taskboard_add_task`；若用户直接说"加个任务 XXX"，则写入当前绑定看板
+- **查看看板**：优先用 `taskboard_list_tasks` 或 `/taskboard list open`
+- **更新状态**：优先用 `taskboard_update_task` / `taskboard_complete_task`
 - **每日汇报**：Heartbeat 自动检查逾期和阻塞任务
 
-> 创建后将 bitable URL 记录到 MEMORY.md，确保跨 session 可定位。
+> 插件配置会保存 board key、appToken、tableId；URL 仍建议记到 MEMORY.md 便于人工追踪。
 
 ## 权限边界
 

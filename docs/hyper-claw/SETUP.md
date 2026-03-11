@@ -226,10 +226,21 @@ Strategist agent 内嵌强制质量关卡（灵感来源：[Edict 三省六部�
 
 通过飞书 bitable 实现轻量级任务追踪：
 
-- 在飞书对话中说 **"创建任务看板"** → AI 自动创建多维表格
+- 内置 `hyper-claw-taskboard` 插件，统一封装建表、绑定、列任务和任务更新
+- 首次使用优先运行 `/taskboard create` 自动创建标准字段的多维表格
+- 已有 bitable 时运行 `/taskboard link <url>` 绑定到当前飞书账号/agent
 - 字段：任务名称、状态、优先级、负责人、截止日期、来源、备注
 - 支持自然语言操作："加个任务 XXX"、"看看任务"、"XXX 完成了"
 - Heartbeat 自动检查逾期和阻塞任务
+
+常用命令：
+
+```text
+/taskboard status
+/taskboard list open
+/taskboard create HyperCreator 任务看板
+/taskboard link https://your-domain.feishu.cn/base/APP_TOKEN?table=TABLE_ID
+```
 
 详见 `workspace/TOOLS.md`。
 
