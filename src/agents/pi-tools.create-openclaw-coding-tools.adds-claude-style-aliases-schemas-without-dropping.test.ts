@@ -12,6 +12,7 @@ import { createOpenClawTools } from "./openclaw-tools.js";
 import { findUnsupportedSchemaKeywords } from "./pi-embedded-runner/google.js";
 import { __testing, createOpenClawCodingTools } from "./pi-tools.js";
 import { createOpenClawReadTool, createSandboxedReadTool } from "./pi-tools.read.js";
+import { READ_DIRECTORY_ERROR_MESSAGE } from "./read-tool-errors.js";
 import { createHostSandboxFsBridge } from "./test-helpers/host-sandbox-fs-bridge.js";
 
 const defaultTools = createOpenClawCodingTools();
@@ -121,13 +122,21 @@ describe("createOpenClawCodingTools", () => {
 
       const wrapped = __testing.wrapToolParamNormalization(tool, [
         { keys: ["path", "file_path"], label: "path (path or file_path)" },
-        { keys: ["content"], label: "content" },
+        { keys: ["content"], label: "content", allowEmpty: true },
       ]);
 
       await wrapped.execute("tool-1", { file_path: "foo.txt", content: "x" });
       expect(execute).toHaveBeenCalledWith(
         "tool-1",
         { path: "foo.txt", content: "x" },
+        undefined,
+        undefined,
+      );
+
+      await wrapped.execute("tool-empty", { file_path: "empty.txt", content: "" });
+      expect(execute).toHaveBeenCalledWith(
+        "tool-empty",
+        { path: "empty.txt", content: "" },
         undefined,
         undefined,
       );
@@ -571,5 +580,49 @@ describe("createOpenClawCodingTools", () => {
       firstLineExceedsLimit: false,
     });
     expect(details?.truncation).not.toHaveProperty("content");
+  });
+
+  it("sanitizes directory read errors without leaking raw EISDIR text", async () => {
+    const baseRead: AgentTool = {
+      name: "read",
+      label: "read",
+      description: "test read",
+      parameters: Type.Object({
+        path: Type.String(),
+      }),
+      execute: vi.fn(async () => {
+        const error = new Error("EISDIR: illegal operation on a directory, read") as Error & {
+          code?: string;
+        };
+        error.code = "EISDIR";
+        throw error;
+      }),
+    };
+
+    const wrapped = createOpenClawReadTool(
+      baseRead as unknown as Parameters<typeof createOpenClawReadTool>[0],
+    );
+
+    await expect(wrapped.execute("read-dir-1", { path: "memory" })).rejects.toThrow(
+      READ_DIRECTORY_ERROR_MESSAGE,
+    );
+    await expect(wrapped.execute("read-dir-1", { path: "memory" })).rejects.not.toThrow(/EISDIR/i);
+  });
+
+  it("returns directory guidance for sandboxed reads", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-read-dir-sandbox-"));
+    await fs.mkdir(path.join(tmpDir, "notes"), { recursive: true });
+    try {
+      const readTool = createSandboxedReadTool({
+        root: tmpDir,
+        bridge: createHostSandboxFsBridge(tmpDir),
+      });
+
+      await expect(readTool.execute("read-dir-sandbox-1", { path: "notes" })).rejects.toThrow(
+        READ_DIRECTORY_ERROR_MESSAGE,
+      );
+    } finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
   });
 });

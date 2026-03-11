@@ -3,6 +3,7 @@ import path from "node:path";
 import { openBoundaryFile, type BoundaryFileOpenResult } from "../../infra/boundary-file-read.js";
 import type { PathAliasPolicy } from "../../infra/path-alias-guards.js";
 import type { SafeOpenSyncAllowedType } from "../../infra/safe-open-sync.js";
+import { createDirectoryReadError } from "../read-tool-errors.js";
 import type { SandboxResolvedFsPath, SandboxFsMount } from "./fs-paths.js";
 import { isPathInsideContainerRoot, normalizeContainerPath } from "./path-utils.js";
 
@@ -72,6 +73,9 @@ export class SandboxFsPathGuard {
   ): Promise<BoundaryFileOpenResult & { ok: true }> {
     const opened = await this.openBoundaryWithinRequiredMount(target, "read files");
     if (!opened.ok) {
+      if (opened.reason === "validation" && this.pathIsExistingDirectory(target.hostPath)) {
+        throw createDirectoryReadError();
+      }
       throw opened.error instanceof Error
         ? opened.error
         : new Error(`Sandbox boundary checks failed; cannot read files: ${target.containerPath}`);

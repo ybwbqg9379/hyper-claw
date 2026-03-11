@@ -23,6 +23,7 @@ import {
   wrapToolParamNormalization,
 } from "./pi-tools.params.js";
 import type { AnyAgentTool } from "./pi-tools.types.js";
+import { createDirectoryReadError, isDirectoryReadError } from "./read-tool-errors.js";
 import { assertSandboxPath } from "./sandbox-paths.js";
 import type { SandboxFsBridge } from "./sandbox/fs-bridge.js";
 import { sanitizeToolResultImages } from "./tool-images.js";
@@ -646,13 +647,21 @@ export function createOpenClawReadTool(
         normalized ??
         (params && typeof params === "object" ? (params as Record<string, unknown>) : undefined);
       assertRequiredParams(record, CLAUDE_PARAM_GROUPS.read, base.name);
-      const result = await executeReadWithAdaptivePaging({
-        base,
-        toolCallId,
-        args: (normalized ?? params ?? {}) as Record<string, unknown>,
-        signal,
-        maxBytes: resolveAdaptiveReadMaxBytes(options),
-      });
+      let result: AgentToolResult<unknown>;
+      try {
+        result = await executeReadWithAdaptivePaging({
+          base,
+          toolCallId,
+          args: (normalized ?? params ?? {}) as Record<string, unknown>,
+          signal,
+          maxBytes: resolveAdaptiveReadMaxBytes(options),
+        });
+      } catch (error) {
+        if (isDirectoryReadError(error)) {
+          throw createDirectoryReadError(error);
+        }
+        throw error;
+      }
       const filePath = typeof record?.path === "string" ? String(record.path) : "<unknown>";
       const strippedDetailsResult = stripReadTruncationContentDetails(result);
       const normalizedResult = await normalizeReadImageResult(strippedDetailsResult, filePath);
