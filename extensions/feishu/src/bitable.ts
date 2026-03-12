@@ -38,6 +38,68 @@ export class LarkApiError extends Error {
   }
 }
 
+type FeishuErrorPayload = {
+  code: number;
+  msg: string;
+};
+
+function extractFeishuErrorPayload(error: unknown): FeishuErrorPayload | null {
+  if (!error) {
+    return null;
+  }
+  if (Array.isArray(error)) {
+    for (const item of error) {
+      const payload = extractFeishuErrorPayload(item);
+      if (payload) {
+        return payload;
+      }
+    }
+    return null;
+  }
+  if (typeof error !== "object") {
+    return null;
+  }
+  const candidate = error as {
+    code?: unknown;
+    msg?: unknown;
+    response?: { data?: unknown };
+  };
+  if (typeof candidate.code === "number" && typeof candidate.msg === "string") {
+    return { code: candidate.code, msg: candidate.msg };
+  }
+  return extractFeishuErrorPayload(candidate.response?.data);
+}
+
+function extractErrorMessage(error: unknown): string | null {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (Array.isArray(error)) {
+    for (const item of error) {
+      const message = extractErrorMessage(item);
+      if (message) {
+        return message;
+      }
+    }
+    return null;
+  }
+  if (typeof error !== "object" || !error) {
+    return null;
+  }
+  const candidate = error as { message?: unknown };
+  return typeof candidate.message === "string" ? candidate.message : null;
+}
+
+function formatFeishuToolError(error: unknown): string {
+  const payload = extractFeishuErrorPayload(error);
+  const message =
+    extractErrorMessage(error) ?? (payload ? `Feishu request failed` : null) ?? String(error);
+  if (!payload) {
+    return message;
+  }
+  return `${message} [code=${payload.code} msg=${payload.msg}]`;
+}
+
 function ensureLarkSuccess<T>(
   res: LarkResponse<T>,
   api: string,
@@ -579,7 +641,7 @@ export function registerFeishuBitableTools(api: OpenClawPluginApi) {
               }),
             );
           } catch (err) {
-            return json({ error: err instanceof Error ? err.message : String(err) });
+            return json({ error: formatFeishuToolError(err) });
           }
         },
       }),
