@@ -5,6 +5,7 @@ import type {
   OpenClawPluginCommandDefinition,
   PluginCommandContext,
 } from "../../src/plugins/types.js";
+import { createTestPluginApi } from "../test-utils/plugin-api.js";
 import { createTaskboardPlugin } from "./index.js";
 
 type MutableConfig = Record<string, unknown>;
@@ -46,11 +47,11 @@ function createApi(params: {
   registerCommand: (command: OpenClawPluginCommandDefinition) => void;
   registerTool: (tool: unknown) => void;
 }): OpenClawPluginApi {
-  return {
+  return createTestPluginApi({
     id: "hyper-claw-taskboard",
     name: "hyper-claw-taskboard",
     source: "test",
-    config: params.config,
+    config: params.config as OpenClawPluginApi["config"],
     pluginConfig: {},
     runtime: {
       config: {
@@ -58,22 +59,9 @@ function createApi(params: {
         writeConfigFile: params.writeConfig,
       },
     } as OpenClawPluginApi["runtime"],
-    logger: { info() {}, warn() {}, error() {} },
     registerTool: params.registerTool as OpenClawPluginApi["registerTool"],
-    registerHook() {},
-    registerHttpRoute() {},
-    registerChannel() {},
-    registerGatewayMethod() {},
-    registerCli() {},
-    registerService() {},
-    registerProvider() {},
-    registerContextEngine() {},
     registerCommand: params.registerCommand,
-    resolvePath(input: string) {
-      return input;
-    },
-    on() {},
-  };
+  }) as OpenClawPluginApi;
 }
 
 function createCommandContext(params?: Partial<PluginCommandContext>): PluginCommandContext {
@@ -83,7 +71,13 @@ function createCommandContext(params?: Partial<PluginCommandContext>): PluginCom
     accountId: "hypercreator",
     isAuthorizedSender: true,
     commandBody: "/taskboard",
-    config: {},
+    config: {} as PluginCommandContext["config"],
+    requestConversationBinding: async () => ({
+      status: "error",
+      message: "unsupported",
+    }),
+    detachConversationBinding: async () => ({ removed: false }),
+    getCurrentConversationBinding: async () => null,
     ...params,
   };
 }

@@ -58,6 +58,13 @@ type BonjourCycle = {
   cleanupUnhandledRejection?: () => void;
 };
 
+type MutableBonjourResponderInternals = {
+  advertiseService?: (...args: unknown[]) => unknown;
+  announce?: (...args: unknown[]) => unknown;
+  probe?: (...args: unknown[]) => unknown;
+  republishService?: (...args: unknown[]) => unknown;
+};
+
 type ServiceStateTracker = {
   state: BonjourServiceState | "unknown";
   sinceMs: number;
@@ -224,12 +231,7 @@ export async function startGatewayBonjourAdvertiser(
       if (!cycle) {
         return;
       }
-      const responder = cycle.responder as unknown as {
-        advertiseService?: (...args: unknown[]) => unknown;
-        announce?: (...args: unknown[]) => unknown;
-        probe?: (...args: unknown[]) => unknown;
-        republishService?: (...args: unknown[]) => unknown;
-      };
+      const responder = cycle.responder as unknown as MutableBonjourResponderInternals;
       const noopAsync = async () => {};
       // ciao schedules its own 2s retry timers after failed probe/announce attempts.
       // Those callbacks target the original responder instance, so disarm it before

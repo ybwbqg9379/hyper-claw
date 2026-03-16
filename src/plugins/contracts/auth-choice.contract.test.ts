@@ -11,7 +11,9 @@ type ResolveProviderPluginChoice =
 type RunProviderModelSelectedHook =
   typeof import("../../plugins/provider-auth-choice.runtime.js").runProviderModelSelectedHook;
 const resolvePluginProvidersMock = vi.hoisted(() => vi.fn<ResolvePluginProviders>(() => []));
-const resolveProviderPluginChoiceMock = vi.hoisted(() => vi.fn<ResolveProviderPluginChoice>());
+const resolveProviderPluginChoiceMock = vi.hoisted(() =>
+  vi.fn<ResolveProviderPluginChoice>(() => null),
+);
 const runProviderModelSelectedHookMock = vi.hoisted(() =>
   vi.fn<RunProviderModelSelectedHook>(async () => {}),
 );
