@@ -69,6 +69,7 @@ const TOOL_DENY_BY_MESSAGE_PROVIDER: Readonly<Record<string, readonly string[]>>
 const TOOL_ALLOW_BY_MESSAGE_PROVIDER: Readonly<Record<string, readonly string[]>> = {
   node: ["canvas", "image", "pdf", "tts", "web_fetch", "web_search"],
 };
+const TOOL_DENY_FOR_XAI_PROVIDERS = new Set(["web_search"]);
 const MEMORY_FLUSH_ALLOWED_TOOL_NAMES = new Set(["read", "write"]);
 
 function normalizeMessageProvider(messageProvider?: string): string | undefined {
@@ -99,10 +100,22 @@ function applyMessageProviderToolPolicy(
 
 function applyModelProviderToolPolicy(
   tools: AnyAgentTool[],
-  params?: { modelCompat?: ModelCompatConfig },
+  params?: { modelProvider?: string; modelId?: string; modelCompat?: ModelCompatConfig },
 ): AnyAgentTool[] {
-  void params;
-  return tools;
+  void params?.modelCompat;
+  const normalizedProvider = params?.modelProvider?.trim().toLowerCase();
+  const normalizedModelId = params?.modelId?.trim().toLowerCase();
+  const isXaiProvider =
+    normalizedProvider === "xai" ||
+    normalizedProvider === "x-ai" ||
+    normalizedModelId?.startsWith("xai/") ||
+    normalizedModelId?.startsWith("x-ai/");
+  if (!isXaiProvider) {
+    return tools;
+  }
+  // xAI/Grok providers expose a native web_search tool. Sending OpenClaw's
+  // web_search alongside it causes duplicate-name request failures.
+  return tools.filter((tool) => !TOOL_DENY_FOR_XAI_PROVIDERS.has(tool.name));
 }
 
 function isApplyPatchAllowedForModel(params: {

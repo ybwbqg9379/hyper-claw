@@ -5,7 +5,7 @@ import type {
   OpenClawPluginCommandDefinition,
   PluginCommandContext,
 } from "../../src/plugins/types.js";
-import { createTestPluginApi } from "../test-utils/plugin-api.js";
+import { createTestPluginApi } from "../../test/helpers/plugins/plugin-api.js";
 import { createTaskboardPlugin } from "./index.js";
 
 type MutableConfig = Record<string, unknown>;
